@@ -1,0 +1,150 @@
+define foo = 100;
+
+define method adder (a) {
+  method (b) {
+    +(a, b);
+  }
+};
+
+define add23 = adder(23);
+
+print(as-string(add23(42)));
+
+
+// fib
+
+define method fib (n) {
+  if <(n, 2) {
+    n
+  } else {
+    +(fib(-(n, 1)),
+      fib(-(n, 2)))
+  }
+};
+
+fib(23);
+
+
+print(as-string(method (a) { a }));
+
+let x = 23 { "FOO"; x };
+
+// closures
+(method (x) {
+  x;
+  (method (z) {
+    z;
+    (method (y) {
+      y;
+      +(x, y)
+     })(42)
+  })(100)
+})(23);
+
+
+let x = 23 { "FOO"; x };
+
+"x";
+
+print("HELLO");
+
+if true { false } else { true };
+
+if true { "true" } else { "false" };
+
+1 && true;
+2 && "true";
+
+
+
+print(let x = "bindings work" { print("ok"); x });
+
+
+print(as-string((method (a, b) { b })(1, 2))); 
+
+method () {
+  true
+};
+
+method (a) {
+  method (b) {
+    true
+  }
+};
+
+
+print("Hello!");
+
+
+if true { "YES"; } else { "NO"  };
+
+1;
+
+"Test";
+
+true;
+
+"Test" && false;
+
+1 || 2;
+
+
+
+// redefinition
+
+define method test () {
+  1
+};
+
+define method use-test1 () {
+  test()
+};
+
+define method test () {
+  2
+};
+
+define method use-test2 () {
+  test()
+};
+
+define method foo () { 1 };
+define method bar (a) { 2 };
+define method baz (a, b) { 3 };
+
+// Y combinator
+
+define method Y (f) {
+  ((method (x) { x(x) })
+   (method (y) {
+      f(method (a) {
+          y(y)(a)
+        })
+    }))
+};
+
+// fib using Y
+
+define fibY = Y(method (f) {
+  method (n) {
+    if <(n, 2) {
+      n
+    } else {
+      +(f(-(n, 1)),
+        f(-(n, 2)))
+    }
+  }
+});
+
+fibY(23);
+
+// loop using Y
+
+Y(method (f) {
+  method (x) {
+    print(as-string(x));
+    if (<(x, 10)) {
+      f(+(x, 1))
+    }
+  }
+})(1);

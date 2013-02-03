@@ -1,0 +1,17 @@
+<project name="lila" basedir="." default="compile">
+  <property name="src" value="src/java" />
+  <property name="build" value="build" />
+
+  <target name="clean">
+    <delete dir="${build}" />
+  </target>
+
+  <target name="compile">
+    <mkdir dir="${build}" />
+    <javac srcdir="${src}"
+           destdir="${build}"
+           includeantruntime="false">
+      <include name="**/*.java" />
+    </javac>
+  </target>
+</project>
