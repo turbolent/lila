@@ -1,7 +1,7 @@
 define foo = 100;
 
-define method adder (a) {
-  method (b) {
+define function adder (a) {
+  function (b) {
     +(a, b);
   }
 };
@@ -13,7 +13,7 @@ print(as-string(add23(42)));
 
 // fib
 
-define method fib (n) {
+define function fib (n) {
   if <(n, 2) {
     n
   } else {
@@ -25,16 +25,16 @@ define method fib (n) {
 fib(23);
 
 
-print(as-string(method (a) { a }));
+print(as-string(function (a) { a }));
 
 let x = 23 { "FOO"; x };
 
 // closures
-(method (x) {
+(function (x) {
   x;
-  (method (z) {
+  (function (z) {
     z;
-    (method (y) {
+    (function (y) {
       y;
       +(x, y)
      })(42)
@@ -60,14 +60,14 @@ if true { "true" } else { "false" };
 print(let x = "bindings work" { print("ok"); x });
 
 
-print(as-string((method (a, b) { b })(1, 2))); 
+print(as-string((function (a, b) { b })(1, 2))); 
 
-method () {
+function () {
   true
 };
 
-method (a) {
-  method (b) {
+function (a) {
+  function (b) {
     true
   }
 };
@@ -92,32 +92,32 @@ true;
 
 // redefinition
 
-define method test () {
+define function test () {
   1
 };
 
-define method use-test1 () {
+define function use-test1 () {
   test()
 };
 
-define method test () {
+define function test () {
   2
 };
 
-define method use-test2 () {
+define function use-test2 () {
   test()
 };
 
-define method foo () { 1 };
-define method bar (a) { 2 };
-define method baz (a, b) { 3 };
+define function foo () { 1 };
+define function bar (a) { 2 };
+define function baz (a, b) { 3 };
 
 // Y combinator
 
-define method Y (f) {
-  ((method (x) { x(x) })
-   (method (y) {
-      f(method (a) {
+define function Y (f) {
+  ((function (x) { x(x) })
+   (function (y) {
+      f(function (a) {
           y(y)(a)
         })
     }))
@@ -125,8 +125,8 @@ define method Y (f) {
 
 // fib using Y
 
-define fibY = Y(method (f) {
-  method (n) {
+define fibY = Y(function (f) {
+  function (n) {
     if <(n, 2) {
       n
     } else {
@@ -140,11 +140,11 @@ fibY(23);
 
 // loop using Y
 
-Y(method (f) {
-  method (x) {
-    print(as-string(x));
-    if (<(x, 10)) {
-      f(+(x, 1))
+Y(function (f) {
+    function (x) {
+      print(as-string(x));
+      if (<(x, 10)) {
+        f(+(x, 1))
+      }
     }
-  }
-})(1);
+  })(1);

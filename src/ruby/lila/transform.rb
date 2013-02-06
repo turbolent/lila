@@ -52,15 +52,24 @@ module Lila
       Program.new(statements)
     }
 
-    rule(:identifier => simple(:name),
-         :parameters => sequence(:parameters),
-         :body => sequence(:statements)) {
+    rule(:function_definition => 
+         {:identifier => simple(:name),
+          :parameters => sequence(:parameters),
+          :body => sequence(:statements)}) {
+      VariableDefinition.new(name.to_s, 
+        Function.new(parameters, statements))
+    }
+    
+    rule(:method_definition => 
+         {:identifier => simple(:name),
+          :parameters => sequence(:parameters),
+          :body => sequence(:statements)}) {
       MethodDefinition.new(name.to_s, parameters, statements)
     }
 
     rule(:parameters => sequence(:parameters),
          :body => sequence(:statements)) {
-      Method.new(parameters, statements)
+      Function.new(parameters, statements)
     }
 
     rule(:test => simple(:test),
@@ -110,7 +119,7 @@ module Lila
 
   module Macros
     def Macros.bind(name, value, expressions)
-      Call.new(Method.new([Parameter.new(name)], expressions),
+      Call.new(Function.new([Parameter.new(name)], expressions),
                Arguments.new([value]))
     end
   end

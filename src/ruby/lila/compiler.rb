@@ -27,7 +27,7 @@ module Lila
       '$' + @@name_id.to_s
     end
 
-    attr_accessor :functions, :parent, :method
+    attr_accessor :functions, :parent, :function
 
     def initialize(parent = nil)
       @parent = parent
@@ -43,9 +43,9 @@ module Lila
     end
 
     def find_parameter(name)
-      (@method.parameters.find { |parameter|
+      (@function.parameters.find { |parameter|
         parameter.name == name
-       } if @method) || @parent.find_parameter(name) if @parent
+       } if @function) || @parent.find_parameter(name) if @parent
     end
   end
 

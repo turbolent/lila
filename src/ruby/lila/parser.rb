@@ -12,7 +12,8 @@ module Lila
     end
 
     rule(:root) {
-      (tWS? >> statement >> tSEMICOLON).repeat.as(:statements)
+      (tWS? >> statement >> 
+        tSEMICOLON).repeat.as(:statements)
     }
 
     rule(:statement) {
@@ -20,16 +21,28 @@ module Lila
     }
 
     rule(:definition) {
-      (method_definition | variable_definition)
+      (function_definition | 
+        method_definition | 
+        variable_definition)
     }
 
+    rule(:function_definition) {
+      (tDEFINE >> tFUNCTION >>
+        identifier >> 
+        parameters.as(:parameters) >> 
+        body).as(:function_definition)
+    }
+    
     rule(:method_definition) {
       (tDEFINE >> tMETHOD >>
-        identifier >> parameters.as(:parameters) >> body)
+        identifier >> 
+        parameters.as(:parameters) >> 
+        body).as(:method_definition)
     }
 
     rule(:variable_definition) {
-      (tDEFINE >> identifier >> tEQUALS >> expression.as(:value))
+      tDEFINE >> identifier >>
+        tEQUALS >> expression.as(:value)
     }
 
     rule(:identifier) {
@@ -72,7 +85,7 @@ module Lila
       (bracketed_expression |
        let_expression |
        if_expression |
-       method |
+       function |
        value |
        identifier) >> tWS?
     }
@@ -96,8 +109,8 @@ module Lila
       tCLOSE_PAREN
     }
 
-    rule(:method) {
-      (tMETHOD >> parameters.as(:parameters) >> body)
+    rule(:function) {
+      (tFUNCTION >> parameters.as(:parameters) >> body)
     }
 
     rule(:parameters) {
@@ -207,6 +220,6 @@ module Lila
       end
     end
 
-    keywords :method, :define, :if, :else, :let
+    keywords :function, :method, :define, :if, :else, :let
   end
 end

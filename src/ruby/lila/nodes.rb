@@ -92,7 +92,7 @@ module Lila
 
     def compile(context, builder)
       if @parameter
-        index = @parameter.method.parameter_index(@parameter)
+        index = @parameter.function.parameter_index(@parameter)
         builder.aload index
       else
         bootstrap = builder.h_invokestatic RT, "bootstrapValue",
@@ -110,16 +110,16 @@ module Lila
     end
 
     def maybe_close_parameter(context, parameter)
-      if parameter.method == context.method
+      if parameter.function == context.function
         parameter
       else
         parameter = maybe_close_parameter context.parent, parameter
-        context.method.add_closed_parameter parameter
+        context.function.add_closed_parameter parameter
       end
     end
   end
 
-  class Method < Expression
+  class Function < Expression
     attr_reader :closed_parameters, :parameters
 
     def initialize(parameters, expressions)
@@ -141,7 +141,7 @@ module Lila
       }
       unless closed_parameter
         closed_parameter = ClosedParameter.new parameter
-        closed_parameter.method = self
+        closed_parameter.function = self
         @closed_parameters << closed_parameter
       end
       closed_parameter
@@ -150,7 +150,7 @@ module Lila
     def parameters=(parameters)
       @parameters = parameters
       @parameters.each { |parameter|
-        parameter.method = self
+        parameter.function = self
       }
     end
 
@@ -185,7 +185,7 @@ module Lila
       unless @closed_parameters.empty?
         @closed_parameters.each { |closed_parameter|
           target_parameter = closed_parameter.parameter
-          index = target_parameter.method.parameter_index(target_parameter)
+          index = target_parameter.function.parameter_index(target_parameter)
           builder.aload index
           close_type = [LilaFunction, LilaObject]
           builder.invokevirtual LilaFunction, 'close', close_type
@@ -196,7 +196,7 @@ module Lila
     def close(context)
       unless @closed
         context = Context.new(context)
-        context.method = self
+        context.function = self
         @expressions.each { |expression|
           expression.close context
         }
@@ -206,7 +206,7 @@ module Lila
   end
 
   class Parameter
-    attr_accessor :method
+    attr_accessor :function
     attr_reader :name
 
     def initialize(name)
