@@ -45,7 +45,16 @@ public class RT {
 		setFunction("<", "lessThan",
 		            MethodType.methodType(LilaBoolean.class,
 		                                  LilaInteger.class, LilaInteger.class));
+
 		ENV.put("*lila-version*", new LilaString("0.1"));
+
+		// TODO: refactor
+		ENV.put("<object>", LilaObject.lilaClass);
+		ENV.put("<string>", LilaString.lilaClass);
+		ENV.put("<integer>", LilaInteger.lilaClass);
+		ENV.put("<boolean>", LilaBoolean.lilaClass);
+		ENV.put("<function>", LilaFunction.lilaClass);
+		ENV.put("<class>", LilaClass.lilaClass);
 	}
 
 	//// values
