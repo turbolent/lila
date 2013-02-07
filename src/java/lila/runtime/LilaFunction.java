@@ -3,10 +3,10 @@ package lila.runtime;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.MutableCallSite;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.util.Iterator;
 
-public class LilaFunction extends LilaObject {
+public class LilaFunction extends LilaCallable {
 	private MethodHandle value;
 
 	public LilaFunction(MethodHandle value) {
@@ -17,41 +17,66 @@ public class LilaFunction extends LilaObject {
 		return this.value;
 	}
 
-	static final Lookup lookup = MethodHandles.lookup();
-	static final MethodType lilaNameType = MethodType.methodType(String.class);
-
-	static String getLilaNameForClass(Class<?> clazz) {
-		String name = "?";
-		try {
-			name = (String)lookup
-				.findStatic(clazz, "getLilaName", lilaNameType)
-				.invokeExact();
-		} catch (Throwable t) {}
-		return name;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		Iterator<Class<?>> iter =
-			this.value.type().parameterList().iterator();
-		while (iter.hasNext()) {
-			Class<?> clazz = iter.next();
-			builder.append(getLilaNameForClass(clazz));
-			if (!iter.hasNext())
-				break;
-			builder.append(", ");
-		}
-		return "#[Function (" + builder.toString() + ") => "
-			+ getLilaNameForClass(this.value.type().returnType())
-			+ "]";
-	}
-
 	public LilaFunction close(LilaObject value) {
 		return new LilaFunction(this.value.bindTo(value));
 	}
 
-	static String getLilaName() {
-		return "<function>";
+	@Override
+	public String toString() {
+		// TODO: show type signature
+		return "#[Function]";
+	}
+
+	// call
+
+	public static boolean checkMH(MethodHandle target, LilaObject fn) {
+		// TODO: cast may fail, right?
+		MethodHandle mh = ((LilaFunction)fn).getValue();
+		return mh == target;
+	}
+
+	@Override
+	public LilaObject fallback
+		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
+		throws Throwable
+	{
+		MethodHandle mh = ((LilaFunction)callable).getValue();
+		MethodType type = callSite.type();
+
+		// adapter that drops first argument (function) and
+		// calls the actual method handle
+		MethodHandle target =
+			MethodHandles.dropArguments(mh, 0, LilaObject.class)
+			.asType(type);
+
+		MethodHandle mhTest = CHECK_MH.bindTo(target);
+
+		MethodType mhTestType = mhTest.type()
+			.changeParameterType(0, type.parameterType(0));
+		mhTest = mhTest.asType(mhTestType);
+
+		// ATM not a cache, always changing target in this fallback
+		// if method handle changes
+		MethodHandle fallback = RT.FALLBACK.bindTo(callSite)
+			// -1: function
+			.asCollector(LilaObject[].class, type.parameterCount() - 1);
+
+		MethodHandle guard =
+			MethodHandles.guardWithTest(mhTest, target, fallback);
+		callSite.setTarget(guard);
+		return (LilaObject)mh.invokeWithArguments((Object[])args);
+	}
+
+	static final Lookup LOOKUP = MethodHandles.lookup();
+	private static final MethodHandle CHECK_MH;
+	static {
+		try {
+			MethodType checkMHType =
+				MethodType.methodType(boolean.class,
+				                      MethodHandle.class, LilaObject.class);
+			CHECK_MH = LOOKUP.findStatic(LilaFunction.class, "checkMH", checkMHType);
+	    } catch (ReflectiveOperationException e) {
+	    	throw (AssertionError)new AssertionError().initCause(e);
+	    }
 	}
 }

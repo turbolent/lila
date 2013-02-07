@@ -96,59 +96,40 @@ public class RT {
 		return callSite;
 	}
 
-	public static boolean checkMH(MethodHandle target, LilaObject fn) {
-		MethodHandle mh = ((LilaFunction)fn).getValue();
-		return mh == target;
-	}
-
+	// generic fallback handler for all calls
 	public static LilaObject fallback
-		(MutableCallSite callSite, LilaObject fn, LilaObject[] args)
-			throws Throwable
-	{
-		MethodHandle mh = ((LilaFunction)fn).getValue();
+	    (MutableCallSite callSite, LilaObject object, LilaObject[] args)
+		throws Throwable
+    {
+		if (object instanceof LilaCallable) {
+			LilaCallable callable = (LilaCallable)object;
+			return callable.fallback(callSite, callable, args);
+		} else
+			throw new RuntimeException("unable to call: " + object);
+    }
 
-		MethodType type = callSite.type();
-
-		// adapter that drops first argument (function) and
-		// calls the actual method handle
-		MethodHandle target =
-			MethodHandles.dropArguments(mh, 0, LilaObject.class)
-			.asType(type);
-
-		MethodHandle mhTest = CHECK_MH.bindTo(target);
-
-		MethodType mhTestType = mhTest.type()
-			.changeParameterType(0, type.parameterType(0));
-		mhTest = mhTest.asType(mhTestType);
-
-		// ATM not a cache, always changing target in this fallback
-		// if method handle changes
-		MethodHandle fallback = FALLBACK.bindTo(callSite)
-			// -1: function
-			.asCollector(LilaObject[].class, type.parameterCount() - 1);
-
-		MethodHandle guard =
-			MethodHandles.guardWithTest(mhTest, target, fallback);
-		callSite.setTarget(guard);
-		return (LilaObject)mh.invokeWithArguments((Object[])args);
-	}
-
-	private static final MethodHandle CHECK_MH;
-	private static final MethodHandle FALLBACK;
+	static final MethodHandle FALLBACK;
 	static {
-    	try {
-    		MethodType checkMHType =
-    			MethodType.methodType(boolean.class,
-    			                      MethodHandle.class, LilaObject.class);
-    		CHECK_MH = LOOKUP.findStatic(RT.class, "checkMH", checkMHType);
-    		MethodType fallbackType =
-    			MethodType.methodType(LilaObject.class,
-    			                      MutableCallSite.class, LilaObject.class,
-    			                      LilaObject[].class);
-	    	FALLBACK = LOOKUP.findStatic(RT.class, "fallback", fallbackType);
-
+		try {
+			MethodType fallbackType =
+				MethodType.methodType(LilaObject.class,
+				                      MutableCallSite.class, LilaObject.class,
+				                      LilaObject[].class);
+			FALLBACK = LOOKUP.findStatic(RT.class, "fallback", fallbackType);
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }
+	}
+
+
+	//// generic functions
+
+	public static LilaGenericFunction findOrCreateGenericFunction(String name) {
+		LilaGenericFunction gf = (LilaGenericFunction)RT.ENV.get(name);
+		if (gf == null) {
+			gf = new LilaGenericFunction();
+			RT.ENV.put(name, gf);
+		}
+		return gf;
 	}
 }

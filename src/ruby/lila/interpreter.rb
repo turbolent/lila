@@ -5,7 +5,7 @@ require 'java'
 
 java_import 'lila.runtime.DynamicClassLoader'
 java_import 'lila.runtime.RT'
-
+java_import 'lila.runtime.LilaObject'
 
 module Lila
   class Interpreter
@@ -18,21 +18,29 @@ module Lila
 
     def run_file(filename)
       source = IO.read(File.expand_path(filename))
-      Parser.parse(source).statements.each { |statement|
+      Parser.parse(source).statements.each do |statement|
         case statement
         when Expression
           puts eval(statement)
         when VariableDefinition
-          value = eval(statement.value)
+          value = eval statement.value
           puts value
-          RT.ENV.put(statement.name, value)
+          RT.ENV[statement.name] = value
         when MethodDefinition
-          # TODO: add support for generic methods
-          value = eval(Method.new(statement.parameters, statement.expressions))
-          puts value
-          RT.ENV.put(statement.name, value)
+          specializers = statement.parameters.map { |parameter|
+                      if parameter.type
+                        eval(parameter.type)
+                      else
+                        LilaObject.lilaClass
+                      end
+                    }
+          function = eval Function.new(statement.parameters,
+                                       statement.expressions)
+          gf = RT.findOrCreateGenericFunction statement.name
+          gf.addMethod function.value, specializers
+          puts gf
         end
-      }
+      end
     end
 
     def dump(expression)
