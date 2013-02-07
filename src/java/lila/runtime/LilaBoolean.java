@@ -1,27 +1,28 @@
 package lila.runtime;
 
 public class LilaBoolean extends LilaObject {
+
+	static LilaClass lilaClass =
+		new LilaClass("<boolean>", LilaBoolean.class);
+
 	private boolean value;
 
 	public LilaBoolean(boolean value) {
 		this.value = value;
 	}
 
-	public boolean getValue() {
-		return value;
+	@Override
+	public Object getJavaValue() {
+		return this.value;
 	}
-
+	
 	@Override
 	public boolean isTrue() {
-		return value;
+		return this.value;
 	}
 
 	@Override
 	public String toString() {
-		return value + "";
-	}
-
-	static String getLilaName() {
-		return "<boolean>";
+		return this.value + "";
 	}
 }

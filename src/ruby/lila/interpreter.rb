@@ -37,7 +37,7 @@ module Lila
           function = eval Function.new(statement.parameters,
                                        statement.expressions)
           gf = RT.findOrCreateGenericFunction statement.name
-          gf.addMethod function.value, specializers
+          gf.addMethod function.javaValue, specializers
           puts gf
         end
       end

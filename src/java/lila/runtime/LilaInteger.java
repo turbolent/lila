@@ -1,22 +1,23 @@
 package lila.runtime;
 
 public class LilaInteger extends LilaObject {
-	private int value;
+
+	static LilaClass lilaClass =
+		new LilaClass("<integer>", LilaInteger.class);
+
+	public int value;
 
 	public LilaInteger(int value) {
 		this.value = value;
 	}
 
-	public int getValue() {
-		return value;
+	@Override
+	public Object getJavaValue() {
+		return this.value;
 	}
 
 	@Override
 	public String toString() {
 		return this.value + "";
-	}
-
-	static String getLilaName() {
-		return "<integer>";
 	}
 }

@@ -2,7 +2,7 @@ package lila.runtime;
 
 public class Core {
 	static LilaString print(LilaString string) {
-		System.out.println(string.getValue());
+		System.out.println(string.string);
 		return string;
 	}
 
@@ -11,14 +11,14 @@ public class Core {
 	}
 
 	static LilaInteger plus(LilaInteger a, LilaInteger b) {
-		return new LilaInteger(a.getValue() + b.getValue());
+		return new LilaInteger(a.value + b.value);
 	}
 
 	static LilaInteger minus(LilaInteger a, LilaInteger b) {
-		return new LilaInteger(a.getValue() - b.getValue());
+		return new LilaInteger(a.value - b.value);
 	}
 
 	static LilaBoolean lessThan(LilaInteger a, LilaInteger b) {
-		return new LilaBoolean(a.getValue() < b.getValue());
+		return new LilaBoolean(a.value < b.value);
 	}
 }

@@ -7,18 +7,23 @@ import java.lang.invoke.MutableCallSite;
 import java.lang.invoke.MethodHandles.Lookup;
 
 public class LilaFunction extends LilaCallable {
-	private MethodHandle value;
+
+	static LilaClass lilaClass =
+		new LilaClass("<function>", LilaFunction.class);
+
+	private MethodHandle methodHandle;
 
 	public LilaFunction(MethodHandle value) {
-		this.value = value;
+		this.methodHandle = value;
 	}
 
-	public MethodHandle getValue() {
-		return this.value;
+	@Override
+	public Object getJavaValue() {
+		return methodHandle;
 	}
 
 	public LilaFunction close(LilaObject value) {
-		return new LilaFunction(this.value.bindTo(value));
+		return new LilaFunction(this.methodHandle.bindTo(value));
 	}
 
 	@Override
@@ -31,7 +36,7 @@ public class LilaFunction extends LilaCallable {
 
 	public static boolean checkMH(MethodHandle target, LilaObject fn) {
 		// TODO: cast may fail, right?
-		MethodHandle mh = ((LilaFunction)fn).getValue();
+		MethodHandle mh = ((LilaFunction)fn).methodHandle;
 		return mh == target;
 	}
 
@@ -40,7 +45,7 @@ public class LilaFunction extends LilaCallable {
 		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable
 	{
-		MethodHandle mh = ((LilaFunction)callable).getValue();
+		MethodHandle mh = ((LilaFunction)callable).methodHandle;
 		MethodType type = callSite.type();
 
 		// adapter that drops first argument (function) and
