@@ -208,9 +208,11 @@ module Lila
   class Parameter
     attr_accessor :function
     attr_reader :name
+    attr_reader :type
 
-    def initialize(name)
+    def initialize(name, type = nil)
       @name = name
+      @type = type
     end
   end
 

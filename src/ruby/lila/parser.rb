@@ -12,7 +12,7 @@ module Lila
     end
 
     rule(:root) {
-      (tWS? >> statement >> 
+      (tWS? >> statement >>
         tSEMICOLON).repeat.as(:statements)
     }
 
@@ -21,22 +21,22 @@ module Lila
     }
 
     rule(:definition) {
-      (function_definition | 
-        method_definition | 
+      (function_definition |
+        method_definition |
         variable_definition)
     }
 
     rule(:function_definition) {
       (tDEFINE >> tFUNCTION >>
-        identifier >> 
-        parameters.as(:parameters) >> 
+        identifier >>
+        parameters.as(:parameters) >>
         body).as(:function_definition)
     }
-    
+
     rule(:method_definition) {
       (tDEFINE >> tMETHOD >>
-        identifier >> 
-        parameters.as(:parameters) >> 
+        identifier >>
+        parameters.as(:parameters) >>
         body).as(:method_definition)
     }
 
@@ -50,7 +50,8 @@ module Lila
     }
 
     rule(:parameter) {
-      tNAME.as(:parameter) >> tWS?
+       tNAME.as(:parameter) >> tWS? >>
+       (tDOUBLE_COLON >> expression.as(:type) >> tWS?).maybe
     }
 
     rule(:expression) {
@@ -58,14 +59,12 @@ module Lila
     }
 
     rule(:or_expression) {
-      (and_expression.as(:left) >>
-        tOR >>
+      (and_expression.as(:left) >> tOR >>
         or_expression.as(:right)).as(:or) | and_expression
     }
 
     rule(:and_expression) {
-      (postfix_expression.as(:left) >>
-        tAND >>
+      (postfix_expression.as(:left) >> tAND >>
         and_expression.as(:right)).as(:and) | postfix_expression
     }
 
@@ -210,7 +209,8 @@ module Lila
             :and => '&&',
             :open_brace => '{',
             :close_brace => '}',
-            :equals => '='
+            :equals => '=',
+            :double_colon => '::'
 
     # keywords
 

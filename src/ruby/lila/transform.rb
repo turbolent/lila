@@ -32,6 +32,11 @@ module Lila
       Parameter.new(parameter.to_s)
     }
 
+    rule(:parameter => simple(:parameter),
+         :type => simple(:type)) {
+      Parameter.new(parameter.to_s, type)
+    }
+
     rule(:arguments => simple(:argument)) {
       Arguments.new(if argument.instance_of? String then []
                     else [argument] end)
@@ -52,15 +57,15 @@ module Lila
       Program.new(statements)
     }
 
-    rule(:function_definition => 
+    rule(:function_definition =>
          {:identifier => simple(:name),
           :parameters => sequence(:parameters),
           :body => sequence(:statements)}) {
-      VariableDefinition.new(name.to_s, 
+      VariableDefinition.new(name.to_s,
         Function.new(parameters, statements))
     }
-    
-    rule(:method_definition => 
+
+    rule(:method_definition =>
          {:identifier => simple(:name),
           :parameters => sequence(:parameters),
           :body => sequence(:statements)}) {
@@ -110,7 +115,7 @@ module Lila
     }
 
     rule(:and => {:left => simple(:left),
-                 :right => simple(:right)}) {
+                  :right => simple(:right)}) {
       Conditional.new(left,
                       Sequence.new([right]),
                       Sequence.new([BooleanValue.new(false)]))
