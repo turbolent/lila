@@ -32,6 +32,14 @@ module Lila
       Parameter.new(parameter.to_s)
     }
 
+    rule(:superclasses => simple(:expression)) {
+      [expression]
+    }
+
+    rule(:superclasses => sequence(:expressions)) {
+      expressions
+    }
+
     rule(:parameter => simple(:parameter),
          :type => simple(:type)) {
       Parameter.new(parameter.to_s, type)
@@ -70,6 +78,12 @@ module Lila
           :parameters => sequence(:parameters),
           :body => sequence(:statements)}) {
       MethodDefinition.new(name.to_s, parameters, statements)
+    }
+
+    rule(:class_definition =>
+         {:identifier => simple(:name),
+          :superclasses => sequence(:superclasses)}) {
+      ClassDefinition.new(name.to_s, superclasses)
     }
 
     rule(:parameters => sequence(:parameters),

@@ -7,8 +7,8 @@ module Lila
     def self.parse(source)
       parser = Parser.new
       transform = Transform.new
-      syntax = parser.parse(source)
-      transform.apply(syntax)
+      cst = parser.parse(source)
+      ast = transform.apply(cst)
     end
 
     rule(:root) {
@@ -23,6 +23,7 @@ module Lila
     rule(:definition) {
       (function_definition |
         method_definition |
+        class_definition |
         variable_definition)
     }
 
@@ -38,6 +39,19 @@ module Lila
         identifier >>
         parameters.as(:parameters) >>
         body).as(:method_definition)
+    }
+
+    rule(:class_definition) {
+      (tDEFINE >> tCLASS >>
+        identifier >>
+        superclasses.as(:superclasses)).as(:class_definition)
+    }
+
+    rule(:superclasses) {
+      tOPEN_PAREN >>
+      (expression.maybe >>
+        (tCOMMA >> expression).repeat).as(:superclasses) >>
+      tCLOSE_PAREN
     }
 
     rule(:variable_definition) {
@@ -220,6 +234,6 @@ module Lila
       end
     end
 
-    keywords :function, :method, :define, :if, :else, :let
+    keywords :class, :function, :method, :define, :if, :else, :let
   end
 end

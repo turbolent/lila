@@ -18,9 +18,11 @@ module Lila
 
   class Program < Struct.new :statements; end
 
-  class MethodDefinition <
-    Struct.new :name, :parameters, :expressions
+  class MethodDefinition < Struct.new \
+    :name, :parameters, :expressions
   end
+
+  class ClassDefinition < Struct.new :name, :superclasses; end
 
   class VariableDefinition < Struct.new :name, :value; end
 
