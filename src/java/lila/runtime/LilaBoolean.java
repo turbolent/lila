@@ -3,7 +3,7 @@ package lila.runtime;
 public class LilaBoolean extends LilaObject {
 
 	static LilaClass lilaClass =
-		new LilaClass("<boolean>", LilaBoolean.class);
+		new LilaClass(true, "<boolean>", LilaBoolean.class);
 
 	private boolean value;
 
@@ -15,7 +15,7 @@ public class LilaBoolean extends LilaObject {
 	public Object getJavaValue() {
 		return this.value;
 	}
-	
+
 	@Override
 	public boolean isTrue() {
 		return this.value;

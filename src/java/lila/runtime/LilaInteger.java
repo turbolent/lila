@@ -3,7 +3,7 @@ package lila.runtime;
 public class LilaInteger extends LilaObject {
 
 	static LilaClass lilaClass =
-		new LilaClass("<integer>", LilaInteger.class);
+		new LilaClass(true, "<integer>", LilaInteger.class);
 
 	public int value;
 

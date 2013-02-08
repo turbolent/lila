@@ -3,7 +3,7 @@ package lila.runtime;
 public class LilaString extends LilaObject {
 
 	static LilaClass lilaClass =
-		new LilaClass("<string>", LilaString.class);
+		new LilaClass(true, "<string>", LilaString.class);
 
 	String string;
 
