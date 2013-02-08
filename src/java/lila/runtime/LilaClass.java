@@ -31,4 +31,7 @@ public class LilaClass extends LilaObject {
 	public String toString() {
 		return "#[Class " + this.name + "]";
 	}
+
+	// set and implemented in ruby
+	public static LilaClassGenerator generator;
 }

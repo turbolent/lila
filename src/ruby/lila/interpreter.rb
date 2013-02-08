@@ -1,11 +1,14 @@
 require 'lila/nodes'
 require 'lila/parser'
 require 'lila/compiler'
+require 'lila/class_generator'
 require 'java'
 
 java_import 'lila.runtime.DynamicClassLoader'
 java_import 'lila.runtime.RT'
 java_import 'lila.runtime.LilaObject'
+java_import 'lila.runtime.LilaClass'
+
 
 module Lila
   class Interpreter
@@ -14,6 +17,7 @@ module Lila
       @loader = DynamicClassLoader.new
       @compiler = Compiler.new
       @context = Context.new
+      LilaClass.generator = ClassGenerator.new
     end
 
     def run_file(filename)
