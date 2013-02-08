@@ -161,6 +161,8 @@ module Lila
       (str("true") | str("false")).as(:boolean)
     }
 
+    rule(:eof) { any.absent? }
+
     # tokens
 
     rule(:tWS) {
@@ -172,7 +174,7 @@ module Lila
     }
 
     rule(:tCOMMENT) {
-      str('//') >> (tEOL.absent? >> any).repeat >> tEOL
+      str('//') >> (tEOL.absent? >> any).repeat >> (tEOL | eof)
     }
 
     rule(:tMULTILINE_COMMENT) {
