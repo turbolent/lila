@@ -13,8 +13,11 @@ public class LilaFunction extends LilaCallable {
 
 	private MethodHandle methodHandle;
 
-	public LilaFunction(MethodHandle value) {
-		this.methodHandle = value;
+	public LilaFunction(MethodHandle methodHandle) {
+		this.methodHandle = methodHandle;
+		// all parameters are required by default
+		this.requiredParameterCount =
+			methodHandle.type().parameterCount();
 	}
 
 	@Override
@@ -52,7 +55,9 @@ public class LilaFunction extends LilaCallable {
 
 		// variable argument function?
 		// create adapter collecting additional arguments
-		if (actualCallSiteParameterCount > function.requiredParameterCount) {
+		if (actualCallSiteParameterCount >= function.requiredParameterCount
+			&& function.hasRest)
+		{
 			int count = (actualCallSiteParameterCount
 						 - function.requiredParameterCount);
 			mh = mh.asCollector(LilaObject[].class, count);

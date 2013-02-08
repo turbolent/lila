@@ -11,4 +11,6 @@ abstract class LilaCallable extends LilaObject {
 		throws Throwable;
 
 	int requiredParameterCount;
+	boolean hasRest = false;
+
 }

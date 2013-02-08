@@ -29,19 +29,17 @@ public class RT {
 
 	static LilaFunction exposeCoreFunction(String exportedName, String name, MethodType type) {
 		LilaFunction function = makeLilaFunction(Core.class, name, type);
-		// all parameters are required by default
-		function.requiredParameterCount = type.parameterCount();
 		ENV.put(exportedName, function);
 		return function;
 	}
 
-	static LilaFunction setCoreFunction(String name, MethodType type) {
+	static LilaFunction exposeCoreFunction(String name, MethodType type) {
 		return exposeCoreFunction(name, name, type);
 	}
 
 	static {
-		setCoreFunction("print", MethodType.methodType(LilaString.class,
-		                                               LilaString.class));
+		exposeCoreFunction("print", MethodType.methodType(LilaString.class,
+		                                                  LilaString.class));
 		exposeCoreFunction("as-string", "asString",
 		                   MethodType.methodType(LilaString.class,
 		                                      LilaObject.class));
@@ -54,12 +52,14 @@ public class RT {
 		exposeCoreFunction("<", "lessThan",
 		                   MethodType.methodType(LilaBoolean.class,
 		                                         LilaInteger.class, LilaInteger.class));
-
+		// random-argument
 		LilaFunction randomArgument =
 			exposeCoreFunction("random-argument", "randomArgument",
 			                   MethodType.methodType(LilaObject.class,
 			                                         LilaObject.class, LilaObject[].class));
 		randomArgument.requiredParameterCount = 1;
+		randomArgument.hasRest = true;
+
 
 
 		ENV.put("*lila-version*", new LilaString("0.1"));
