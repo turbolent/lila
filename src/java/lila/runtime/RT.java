@@ -18,33 +18,49 @@ public class RT {
 
 	public static Map<String,LilaObject> ENV = new HashMap<>();
 
-	static void setFunction(String name, MethodType type) {
-		setFunction(name, name, type);
-	}
-
-	static void setFunction(String exportedName, String name, MethodType type) {
+	static LilaFunction makeLilaFunction(Class<?> clazz, String name, MethodType type) {
 		try {
-			ENV.put(exportedName, new LilaFunction(LOOKUP.findStatic(Core.class, name, type)));
+			return new LilaFunction(LOOKUP.findStatic(clazz, name, type));
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 
+	static LilaFunction exposeCoreFunction(String exportedName, String name, MethodType type) {
+		LilaFunction function = makeLilaFunction(Core.class, name, type);
+		// all parameters are required by default
+		function.requiredParameterCount = type.parameterCount();
+		ENV.put(exportedName, function);
+		return function;
+	}
+
+	static LilaFunction setCoreFunction(String name, MethodType type) {
+		return exposeCoreFunction(name, name, type);
+	}
+
 	static {
-		setFunction("print", MethodType.methodType(LilaString.class,
-		                                           LilaString.class));
-		setFunction("as-string", "asString",
-		            MethodType.methodType(LilaString.class,
-		                                  LilaObject.class));
-		setFunction("+", "plus",
-		            MethodType.methodType(LilaInteger.class,
-		                                  LilaInteger.class, LilaInteger.class));
-		setFunction("-", "minus",
-		            MethodType.methodType(LilaInteger.class,
-		                                  LilaInteger.class, LilaInteger.class));
-		setFunction("<", "lessThan",
-		            MethodType.methodType(LilaBoolean.class,
-		                                  LilaInteger.class, LilaInteger.class));
+		setCoreFunction("print", MethodType.methodType(LilaString.class,
+		                                               LilaString.class));
+		exposeCoreFunction("as-string", "asString",
+		                   MethodType.methodType(LilaString.class,
+		                                      LilaObject.class));
+		exposeCoreFunction("+", "plus",
+		                   MethodType.methodType(LilaInteger.class,
+		                                         LilaInteger.class, LilaInteger.class));
+		exposeCoreFunction("-", "minus",
+		                   MethodType.methodType(LilaInteger.class,
+		                                         LilaInteger.class, LilaInteger.class));
+		exposeCoreFunction("<", "lessThan",
+		                   MethodType.methodType(LilaBoolean.class,
+		                                         LilaInteger.class, LilaInteger.class));
+
+		LilaFunction randomArgument =
+			exposeCoreFunction("random-argument", "randomArgument",
+			                   MethodType.methodType(LilaObject.class,
+			                                         LilaObject.class, LilaObject[].class));
+		randomArgument.requiredParameterCount = 1;
+
 
 		ENV.put("*lila-version*", new LilaString("0.1"));
 

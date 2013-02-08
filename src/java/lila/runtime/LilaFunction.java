@@ -9,7 +9,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 public class LilaFunction extends LilaCallable {
 
 	static LilaClass lilaClass =
-		new LilaClass("<function>", LilaFunction.class);
+		new LilaClass(true, "<function>", LilaFunction.class);
 
 	private MethodHandle methodHandle;
 
@@ -45,26 +45,37 @@ public class LilaFunction extends LilaCallable {
 		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable
 	{
-		MethodHandle mh = ((LilaFunction)callable).methodHandle;
-		MethodType type = callSite.type();
+		LilaFunction function = (LilaFunction)callable;
+		MethodHandle mh = function.methodHandle;
+		MethodType callSiteType = callSite.type();
+		int actualCallSiteParameterCount = callSiteType.parameterCount() - 1;
+
+		// variable argument function?
+		// create adapter collecting additional arguments
+		if (actualCallSiteParameterCount > function.requiredParameterCount) {
+			int count = (actualCallSiteParameterCount
+						 - function.requiredParameterCount);
+			mh = mh.asCollector(LilaObject[].class, count);
+		}
 
 		// adapter that drops first argument (function) and
 		// calls the actual method handle
-		MethodHandle target =
-			MethodHandles.dropArguments(mh, 0, LilaObject.class)
-			.asType(type);
+		MethodHandle target = MethodHandles
+			.dropArguments(mh, 0, LilaObject.class)
+			.asType(callSiteType);
 
 		MethodHandle mhTest = CHECK_MH.bindTo(target);
 
 		MethodType mhTestType = mhTest.type()
-			.changeParameterType(0, type.parameterType(0));
+			.changeParameterType(0, callSiteType.parameterType(0));
 		mhTest = mhTest.asType(mhTestType);
 
 		// ATM not a cache, always changing target in this fallback
 		// if method handle changes
 		MethodHandle fallback = RT.FALLBACK.bindTo(callSite)
 			// -1: function
-			.asCollector(LilaObject[].class, type.parameterCount() - 1);
+			.asCollector(LilaObject[].class,
+			             actualCallSiteParameterCount);
 
 		MethodHandle guard =
 			MethodHandles.guardWithTest(mhTest, target, fallback);

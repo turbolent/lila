@@ -1,5 +1,7 @@
 package lila.runtime;
 
+import java.util.Random;
+
 public class Core {
 	static LilaString print(LilaString string) {
 		System.out.println(string.string);
@@ -20,5 +22,10 @@ public class Core {
 
 	static LilaBoolean lessThan(LilaInteger a, LilaInteger b) {
 		return new LilaBoolean(a.value < b.value);
+	}
+
+	static LilaObject randomArgument(LilaObject ignored, LilaObject[] rest) {
+		Random random = new Random();
+		return rest[random.nextInt(rest.length)];
 	}
 }
