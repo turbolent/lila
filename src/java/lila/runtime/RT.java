@@ -60,6 +60,13 @@ public class RT {
 		randomArgument.requiredParameterCount = 1;
 		randomArgument.hasRest = true;
 
+		// make
+		MethodType makeType = MethodType.methodType(LilaObject.class,
+		                                            LilaClass.class, LilaObject[].class);
+		LilaFunction make = exposeCoreFunction("make", makeType);
+		make.requiredParameterCount = 1;
+		make.hasRest = true;
+
 
 
 		ENV.put("*lila-version*", new LilaString("0.1"));
