@@ -1,0 +1,48 @@
+// functions
+
+define function foo (x) {
+  +(x, 1); 
+};
+
+foo(1);
+
+// methods
+
+define method test (x :: <string>) {
+  1
+}; 
+
+define method test (x :: <boolean>) {
+  2
+};
+
+test("test");
+
+test(true);
+
+<object>;
+
+define class <foo> (<object>);
+
+let x = make(<foo>) {
+  print(as-string(object-class(x)));
+  x;
+};
+
+define class <bar> (<foo>);
+
+assert(subtype?(<bar>, <foo>));
+assert(subtype?(<foo>, <foo>));
+assert(subtype?(<bar>, <bar>));
+assert(not(subtype?(<foo>, <bar>)));
+
+
+define <baz> = make(<class>, "<baz>", make-array(<foo>, <bar>));
+
+assert(subtype?(<baz>, <foo>));
+assert(subtype?(<bar>, <bar>));
+
+make(<class>, "<xyz>");
+make(<class>);
+
+
