@@ -28,7 +28,7 @@ module Lila
         when VariableDefinition
           value = eval statement.value
           puts value
-          RT.ENV[statement.name] = value
+          RT.setValue statement.name, value
         when MethodDefinition
           specializers = statement.parameters.map { |parameter|
             if parameter.type
@@ -47,7 +47,7 @@ module Lila
               eval(superclass)
           }.to_java(LilaClass)
           lilaClass = LilaClass.make(statement.name, superclasses)
-          RT.ENV[statement.name] = lilaClass
+          RT.setValue statement.name, lilaClass
           puts lilaClass
         else
           puts "Unknown statement #{statement}"
