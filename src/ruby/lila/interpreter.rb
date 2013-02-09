@@ -42,6 +42,15 @@ module Lila
           gf = RT.findOrCreateGenericFunction statement.name
           gf.addMethod function.javaValue, specializers
           puts gf
+        when ClassDefinition
+          superclasses = statement.superclasses.map { |superclass|
+              eval(superclass)
+          }.to_java(LilaClass)
+          lilaClass = LilaClass.make(statement.name, superclasses)
+          RT.ENV[statement.name] = lilaClass
+          puts lilaClass
+        else
+          puts "Unknown statement #{statement}"
         end
       end
     end
