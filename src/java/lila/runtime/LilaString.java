@@ -8,6 +8,7 @@ public class LilaString extends LilaObject {
 	String string;
 
 	public LilaString(String string) {
+		super(lilaClass);
 		this.string = string;
 	}
 

@@ -8,6 +8,7 @@ public class LilaInteger extends LilaObject {
 	public int value;
 
 	public LilaInteger(int value) {
+		super(lilaClass);
 		this.value = value;
 	}
 

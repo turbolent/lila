@@ -11,6 +11,7 @@ public class LilaBoolean extends LilaObject {
 	private boolean value;
 
 	protected LilaBoolean(boolean value) {
+		super(lilaClass);
 		this.value = value;
 	}
 

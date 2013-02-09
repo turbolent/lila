@@ -14,6 +14,7 @@ public class LilaFunction extends LilaCallable {
 	private MethodHandle methodHandle;
 
 	public LilaFunction(MethodHandle methodHandle) {
+		super(lilaClass);
 		this.methodHandle = methodHandle;
 		// all parameters are required by default
 		this.requiredParameterCount =

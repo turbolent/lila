@@ -19,7 +19,9 @@ public class LilaGenericFunction extends LilaCallable {
 	List<LilaObject> closedArguments =
 		Collections.<LilaObject>emptyList();
 
-	public LilaGenericFunction() {}
+	public LilaGenericFunction() {
+		super(lilaClass);
+	}
 
 	public LilaGenericFunction close(LilaObject value) {
 		LilaGenericFunction gf = new LilaGenericFunction();

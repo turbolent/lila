@@ -8,11 +8,21 @@ public class LilaClass extends LilaObject {
 	private String name;
 	private Class<?> javaClass;
 	private boolean builtin;
+	private LilaClass[] superclasses;
 
 	LilaClass(boolean builtin, String name, Class<?> javaClass) {
+		this(builtin, name, javaClass, null);
+	}
+
+	LilaClass(boolean builtin, String name, Class<?> javaClass, LilaClass[] superclasses) {
+		super(lilaClass);
 		this.builtin = builtin;
 		this.name = name;
 		this.javaClass = javaClass;
+		if (superclasses == null)
+			superclasses = new LilaClass[] { LilaObject.lilaClass };
+		this.superclasses = superclasses;
+	}
 	}
 
 	public boolean isBuiltin() {
