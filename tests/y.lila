@@ -1,0 +1,36 @@
+// Y combinator
+
+define function Y (f) {
+  ((function (x) { x(x) })
+   (function (y) {
+      f(function (a) {
+          y(y)(a)
+        })
+    }))
+};
+
+// fib using Y
+
+define fibY = Y(function (f) {
+  function (n) {
+    if <(n, 2) {
+      n
+    } else {
+      +(f(-(n, 1)),
+        f(-(n, 2)))
+    }
+  }
+});
+
+fibY(23);
+
+// loop using Y
+
+Y(function (f) {
+    function (x) {
+      print(as-string(x));
+      if (<(x, 10)) {
+        f(+(x, 1))
+      }
+    }
+  })(1);

@@ -1,4 +1,21 @@
+
 define foo = 100;
+
+// calls
+
++(1, 2);
+
+
+print(as-string((function (a, b) { b })(1, 2))); 
+
+
+// bindings
+
+let x = 23 { "FOO"; x };
+print(let x = "bindings work" { print("ok"); x });
+
+
+// closures
 
 define function adder (a) {
   function (b) {
@@ -10,26 +27,6 @@ define add23 = adder(23);
 
 print(as-string(add23(42)));
 
-
-// fib
-
-define function fib (n) {
-  if <(n, 2) {
-    n
-  } else {
-    +(fib(-(n, 1)),
-      fib(-(n, 2)))
-  }
-};
-
-fib(23);
-
-
-print(as-string(function (a) { a }));
-
-let x = 23 { "FOO"; x };
-
-// closures
 (function (x) {
   x;
   (function (z) {
@@ -42,11 +39,7 @@ let x = 23 { "FOO"; x };
 })(23);
 
 
-let x = 23 { "FOO"; x };
-
-"x";
-
-print("HELLO");
+// conditionals
 
 if true { false } else { true };
 
@@ -54,97 +47,4 @@ if true { "true" } else { "false" };
 
 1 && true;
 2 && "true";
-
-
-
-print(let x = "bindings work" { print("ok"); x });
-
-
-print(as-string((function (a, b) { b })(1, 2))); 
-
-function () {
-  true
-};
-
-function (a) {
-  function (b) {
-    true
-  }
-};
-
-
-print("Hello!");
-
-
-if true { "YES"; } else { "NO"  };
-
-1;
-
-"Test";
-
-true;
-
-"Test" && false;
-
 1 || 2;
-
-
-
-// redefinition
-
-define function test () {
-  1
-};
-
-define function use-test1 () {
-  test()
-};
-
-define function test () {
-  2
-};
-
-define function use-test2 () {
-  test()
-};
-
-define function foo () { 1 };
-define function bar (a) { 2 };
-define function baz (a, b) { 3 };
-
-// Y combinator
-
-define function Y (f) {
-  ((function (x) { x(x) })
-   (function (y) {
-      f(function (a) {
-          y(y)(a)
-        })
-    }))
-};
-
-// fib using Y
-
-define fibY = Y(function (f) {
-  function (n) {
-    if <(n, 2) {
-      n
-    } else {
-      +(f(-(n, 1)),
-        f(-(n, 2)))
-    }
-  }
-});
-
-fibY(23);
-
-// loop using Y
-
-Y(function (f) {
-    function (x) {
-      print(as-string(x));
-      if (<(x, 10)) {
-        f(+(x, 1))
-      }
-    }
-  })(1);

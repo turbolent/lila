@@ -1,0 +1,43 @@
+
+// builtin classes
+
+<object>;
+
+<class>;
+
+// define class
+
+define class <foo> (<object>);
+
+let x = make(<foo>) {
+  print(as-string(object-class(x)));
+  x;
+};
+
+define class <bar> (<foo>);
+
+// subtyping tests
+
+assert(subtype?(<bar>, <foo>));
+assert(subtype?(<foo>, <foo>));
+assert(subtype?(<bar>, <bar>));
+assert(not(subtype?(<foo>, <bar>)));
+
+// multiple inheritance
+
+define class <baz> (<foo>, <bar>);
+
+assert(subtype?(<baz>, <foo>));
+assert(subtype?(<baz>, <bar>));
+
+// use make to create a class
+
+define <baz2> = make(<class>, "<baz2>", make-array(<foo>, <bar>));
+
+assert(subtype?(<baz2>, <foo>));
+assert(subtype?(<baz2>, <bar>));
+
+// anonymous classes
+
+make(<class>, "<xyz>");
+make(<class>);
