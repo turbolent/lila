@@ -9,12 +9,11 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
 import java.util.HashMap;
 import java.util.Map;
+import static java.lang.invoke.MethodType.methodType;
 
 public class RT {
 
-	static final Lookup LOOKUP = MethodHandles.lookup();
-
-	//// initialize environment
+	static Lookup lookup = MethodHandles.lookup();
 
 	public static Map<String,LilaObject> ENV = new HashMap<>();
 
@@ -100,8 +99,8 @@ public class RT {
 		(Class<?> clazz, String name, Class<?> rtype, Class<?>... ptypes)
 		throws Throwable
 	{
-		MethodType type = MethodType.methodType(rtype, ptypes);
-		FUNCTIONS.put(name, LOOKUP.findStatic(clazz, name, type));
+		MethodType type = methodType(rtype, ptypes);
+		FUNCTIONS.put(name, lookup.findStatic(clazz, name, type));
 	}
 
 	public static CallSite bootstrapFunction
@@ -144,10 +143,10 @@ public class RT {
 	static {
 		try {
 			MethodType fallbackType =
-				MethodType.methodType(LilaObject.class,
+				methodType(LilaObject.class,
 				                      MutableCallSite.class, LilaObject.class,
 				                      LilaObject[].class);
-			FALLBACK = LOOKUP.findStatic(RT.class, "fallback", fallbackType);
+			FALLBACK = lookup.findStatic(RT.class, "fallback", fallbackType);
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }

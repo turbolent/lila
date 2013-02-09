@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
 import java.lang.invoke.MethodHandles.Lookup;
+import static java.lang.invoke.MethodType.methodType;
 
 public class LilaFunction extends LilaCallable {
 
@@ -93,9 +94,8 @@ public class LilaFunction extends LilaCallable {
 	private static final MethodHandle CHECK_MH;
 	static {
 		try {
-			MethodType checkMHType =
-				MethodType.methodType(boolean.class,
-				                      MethodHandle.class, LilaObject.class);
+			MethodType checkMHType = methodType(boolean.class,
+			                                    MethodHandle.class, LilaObject.class);
 			CHECK_MH = LOOKUP.findStatic(LilaFunction.class, "checkMH", checkMHType);
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);

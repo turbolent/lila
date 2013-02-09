@@ -1,5 +1,4 @@
 require 'bitescript'
-require 'tempfile'
 
 java_import 'lila.runtime.LilaObject'
 
