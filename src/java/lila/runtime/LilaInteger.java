@@ -17,6 +17,13 @@ public class LilaInteger extends LilaObject {
 		return this.value;
 	}
 
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj.getClass() == this.getClass()
+            	&& ((LilaInteger)obj).value == this.value);
+	}
+
 	@Override
 	public String toString() {
 		return this.value + "";

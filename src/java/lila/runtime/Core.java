@@ -214,4 +214,16 @@ public class Core {
 		makeArray.requiredParameterCount = 0;
 		makeArray.hasRest = true;
 	}
+
+	// ==
+
+	static LilaBoolean equals(LilaObject object, LilaObject other) {
+		return new LilaBoolean(object.equals(other));
+	}
+
+	static {
+		exposeCoreFunction("==", "equals",
+		                   methodType(LilaBoolean.class,
+		                              LilaObject.class, LilaObject.class));
+	}
 }
