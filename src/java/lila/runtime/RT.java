@@ -77,6 +77,7 @@ public class RT {
 		ENV.put("<boolean>", LilaBoolean.lilaClass);
 		ENV.put("<function>", LilaFunction.lilaClass);
 		ENV.put("<class>", LilaClass.lilaClass);
+		ENV.put("<array>", LilaArray.lilaClass);
 	}
 
 	//// values
