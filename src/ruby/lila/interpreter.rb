@@ -5,6 +5,7 @@ require 'java'
 
 java_import 'lila.runtime.DynamicClassLoader'
 java_import 'lila.runtime.RT'
+java_import 'lila.runtime.Core'
 java_import 'lila.runtime.LilaObject'
 java_import 'lila.runtime.LilaClass'
 

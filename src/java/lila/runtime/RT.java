@@ -17,57 +17,7 @@ public class RT {
 
 	public static Map<String,LilaObject> ENV = new HashMap<>();
 
-	static LilaFunction makeLilaFunction(Class<?> clazz, String name, MethodType type) {
-		try {
-			return new LilaFunction(LOOKUP.findStatic(clazz, name, type));
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	static LilaFunction exposeCoreFunction(String exportedName, String name, MethodType type) {
-		LilaFunction function = makeLilaFunction(Core.class, name, type);
-		ENV.put(exportedName, function);
-		return function;
-	}
-
-	static LilaFunction exposeCoreFunction(String name, MethodType type) {
-		return exposeCoreFunction(name, name, type);
-	}
-
 	static {
-		exposeCoreFunction("print", MethodType.methodType(LilaString.class,
-		                                                  LilaString.class));
-		exposeCoreFunction("as-string", "asString",
-		                   MethodType.methodType(LilaString.class,
-		                                      LilaObject.class));
-		exposeCoreFunction("+", "plus",
-		                   MethodType.methodType(LilaInteger.class,
-		                                         LilaInteger.class, LilaInteger.class));
-		exposeCoreFunction("-", "minus",
-		                   MethodType.methodType(LilaInteger.class,
-		                                         LilaInteger.class, LilaInteger.class));
-		exposeCoreFunction("<", "lessThan",
-		                   MethodType.methodType(LilaBoolean.class,
-		                                         LilaInteger.class, LilaInteger.class));
-		// random-argument
-		LilaFunction randomArgument =
-			exposeCoreFunction("random-argument", "randomArgument",
-			                   MethodType.methodType(LilaObject.class,
-			                                         LilaObject.class, LilaObject[].class));
-		randomArgument.requiredParameterCount = 1;
-		randomArgument.hasRest = true;
-
-		// make
-		MethodType makeType = MethodType.methodType(LilaObject.class,
-		                                            LilaClass.class, LilaObject[].class);
-		LilaFunction make = exposeCoreFunction("make", makeType);
-		make.requiredParameterCount = 1;
-		make.hasRest = true;
-
-
-
 		ENV.put("*lila-version*", new LilaString("0.1"));
 
 		// TODO: refactor
