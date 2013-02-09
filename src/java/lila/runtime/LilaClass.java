@@ -1,5 +1,7 @@
 package lila.runtime;
 
+import java.util.Arrays;
+
 public class LilaClass extends LilaObject {
 
 	static LilaClass lilaClass =
@@ -23,6 +25,27 @@ public class LilaClass extends LilaObject {
 			superclasses = new LilaClass[] { LilaObject.lilaClass };
 		this.superclasses = superclasses;
 	}
+
+	// wrapper, called from programs with lila objects
+	public static LilaObject make(LilaObject[] arguments) {
+		String name = (arguments.length > 0
+						? ((LilaString)arguments[0]).string
+						: null);
+		// no casting
+		LilaClass[] actualSuperclasses = null;
+		if (arguments.length > 1) {
+			LilaObject[] superclasses = ((LilaArray)arguments[1]).array;
+			actualSuperclasses = Arrays.copyOf(superclasses, superclasses.length,
+			                                   LilaClass[].class);
+		}
+		return make(name, actualSuperclasses);
+	}
+
+	// actual implementation, called internally with java objects
+	public static LilaClass make(String name, LilaClass[] superclasses) {
+		if (superclasses != null && superclasses.length == 0)
+			superclasses = null;
+		return new LilaClass(false, name, null, superclasses);
 	}
 
 	public boolean isBuiltin() {

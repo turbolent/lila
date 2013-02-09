@@ -134,9 +134,6 @@ public class Core {
 		return rest[random.nextInt(rest.length)];
 	}
 
-	 static final Lookup lookup = MethodHandles.lookup();
-	 static final MethodType builtinMakeType =
-		 MethodType.methodType(LilaObject.class, LilaObject[].class);
 	static {
 		LilaFunction randomArgument =
 			exposeCoreFunction("random-argument", "randomArgument",
@@ -148,17 +145,25 @@ public class Core {
 
 	// make
 
-	static LilaObject make(LilaClass lilaClass, LilaObject[] rest) throws Exception {
+	static final MethodType builtinMakeType =
+		methodType(LilaObject.class,
+		           LilaObject[].class);
+
+	static LilaObject make(LilaClass lilaClass, LilaObject[] rest)
+		throws Throwable
+	{
+		Class<?> javaClass = lilaClass.getJavaClass();
+		LilaObject object = null;
 		if (lilaClass.isBuiltin()) {
-			LilaObject object = null;
-			try {
-				object = (LilaObject)lookup
-					.findStatic(lilaClass.getJavaClass(), "make", builtinMakeType)
-					.invokeWithArguments((Object[])rest);
-			} catch (Throwable t) {}
-			return object;
-		} else
-			return (LilaObject)lilaClass.getJavaClass().newInstance();
+			MethodHandle mh = lookup
+				.findStatic(javaClass, "make", builtinMakeType);
+			object = (LilaObject)mh.invokeExact(rest);
+		} else {
+			object = new LilaObject(lilaClass);
+		}
+		return object;
+	}
+
 	static {
 		LilaFunction make =
 			exposeCoreFunction("make",
