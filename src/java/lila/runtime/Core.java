@@ -173,5 +173,45 @@ public class Core {
 		make.hasRest = true;
 	}
 
+
+	// object-class
+
+	static LilaClass objectClass(LilaObject object) {
+		return object.getType();
+	}
+
+	static {
+		exposeCoreFunction("object-class", "objectClass",
+		                   methodType(LilaClass.class,
+		                              LilaObject.class));
+	}
+
+
+	// subtype?
+
+	static LilaBoolean isSubtypeOf(LilaClass a, LilaClass b) {
+		return LilaBoolean.box(a.isSubtypeOf(b));
+	}
+
+	static {
+		exposeCoreFunction("subtype?", "isSubtypeOf",
+		                   methodType(LilaBoolean.class,
+		                              LilaClass.class, LilaClass.class));
+	}
+
+
+	// make-array
+
+	static LilaArray makeArray(LilaObject[] rest) {
+		return new LilaArray(rest);
+	}
+
+	static {
+		LilaFunction makeArray =
+			exposeCoreFunction("make-array", "makeArray",
+			                   methodType(LilaArray.class,
+			                              LilaObject[].class));
+		makeArray.requiredParameterCount = 0;
+		makeArray.hasRest = true;
 	}
 }

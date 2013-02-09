@@ -60,8 +60,19 @@ public class LilaClass extends LilaObject {
 		return this.javaClass;
 	}
 
+	public boolean isSubtypeOf(LilaClass other) {
+		if (other == this)
+			return true;
+		for (LilaClass superclass : this.superclasses) {
+			if (superclass.isSubtypeOf(other))
+				return true;
+		}
+		return false;
+	}
+
 	@Override
 	public String toString() {
-		return "#[Class " + this.name + "]";
+		String name = (this.name == null ? "" : " " + this.name);
+		return "#[Class" + name + "]";
 	}
 }
