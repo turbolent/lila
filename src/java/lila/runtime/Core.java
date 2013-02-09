@@ -24,7 +24,7 @@ public class Core {
 	}
 
 	static LilaBoolean lessThan(LilaInteger a, LilaInteger b) {
-		return new LilaBoolean(a.value < b.value);
+		return LilaBoolean.box(a.value < b.value);
 	}
 
 	static LilaObject randomArgument(LilaObject ignored, LilaObject[] rest) {

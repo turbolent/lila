@@ -52,7 +52,7 @@ module Lila
     end
 
     def box_boolean(builder)
-      box builder, Java::boolean, LilaBoolean
+      builder.invokestatic LilaBoolean, 'box', [LilaBoolean, Java::boolean]
     end
   end
 
