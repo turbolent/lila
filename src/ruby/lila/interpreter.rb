@@ -31,12 +31,12 @@ module Lila
           RT.ENV[statement.name] = value
         when MethodDefinition
           specializers = statement.parameters.map { |parameter|
-                      if parameter.type
-                        eval(parameter.type)
-                      else
-                        LilaObject.lilaClass
-                      end
-                    }
+            if parameter.type
+              eval(parameter.type)
+            else
+              LilaObject.lilaClass
+            end
+          }
           function = eval Function.new(statement.parameters,
                                        statement.expressions)
           gf = RT.findOrCreateGenericFunction statement.name
