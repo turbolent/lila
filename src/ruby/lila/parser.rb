@@ -30,14 +30,14 @@ module Lila
     rule(:function_definition) {
       (tDEFINE >> tFUNCTION >>
         identifier >>
-        parameters.as(:parameters) >>
+        parameter_list.as(:parameter_list) >>
         body).as(:function_definition)
     }
 
     rule(:method_definition) {
       (tDEFINE >> tMETHOD >>
         identifier >>
-        parameters.as(:parameters) >>
+        parameter_list.as(:parameter_list) >>
         body).as(:method_definition)
     }
 
@@ -123,13 +123,16 @@ module Lila
     }
 
     rule(:function) {
-      (tFUNCTION >> parameters.as(:parameters) >> body)
+      (tFUNCTION >>
+        parameter_list.as(:parameter_list) >>
+        body)
     }
 
-    rule(:parameters) {
+    rule(:parameter_list) {
       tOPEN_PAREN >>
       (parameter.maybe >>
-        (tCOMMA >> parameter).repeat).as(:parameters) >>
+        (tCOMMA >> parameter).repeat).as(:required_parameters) >>
+      (tELLIPSIS >> parameter).as(:rest_parameter).maybe >>
       tCLOSE_PAREN
     }
 
@@ -226,7 +229,8 @@ module Lila
             :open_brace => '{',
             :close_brace => '}',
             :equals => '=',
-            :double_colon => '::'
+            :double_colon => '::',
+            :ellipsis => '...'
 
     # keywords
 

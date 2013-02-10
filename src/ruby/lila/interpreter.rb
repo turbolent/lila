@@ -70,13 +70,14 @@ module Lila
       clazz = @loader.define(expression.name, expression.code)
 
       # register internal functions created during compilation
-      expression.functions.each { |name, type|
+      expression.functions.each { |name, type_rest|
+        type, rest = type_rest
         # convert types to java classes
         type = type.map { |c| c.java_class }
         rtype, *ptypes = *type
         ptypes = ptypes.to_java(Java::java.lang.Class)
         # finally, call into runtime
-        RT.registerInternalFunction clazz, name, rtype, ptypes
+        RT.registerInternalFunction clazz, name, rest, rtype, ptypes
       }
 
       @loader.run(clazz, 'run')

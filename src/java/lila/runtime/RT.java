@@ -91,23 +91,26 @@ public class RT {
 
 	//// functions
 
-	static Map<String,MethodHandle> FUNCTIONS = new HashMap<>();
+	static Map<String,LilaFunction> FUNCTIONS = new HashMap<>();
 
 	public static void registerInternalFunction
-		(Class<?> clazz, String name, Class<?> rtype, Class<?>... ptypes)
+		(Class<?> clazz, String name, boolean hasRest,
+		 Class<?> rtype, Class<?>... ptypes)
 		throws Throwable
 	{
-		// NOTE: no name decoding required, as it is not encoded
 		MethodType type = methodType(rtype, ptypes);
-		FUNCTIONS.put(name, lookup.findStatic(clazz, name, type));
+		// NOTE: no name decoding required, as it is not encoded
+		MethodHandle handle = lookup.findStatic(clazz, name, type);
+		LilaFunction function = new LilaFunction(handle);
+		function.hasRest = hasRest;
+		FUNCTIONS.put(name, function);
 	}
 
 	public static CallSite bootstrapFunction
 		(Lookup lookup, String name, MethodType type)
 	{
 		name = StringNames.toSourceName(name);
-		MethodHandle handle = FUNCTIONS.get(name);
-		LilaFunction function = new LilaFunction(handle);
+		LilaFunction function = FUNCTIONS.get(name);
 		MethodHandle valueHandle =
 			MethodHandles.constant(LilaFunction.class, function);
 		return new ConstantCallSite(valueHandle);
@@ -119,10 +122,10 @@ public class RT {
 		(Lookup lookup, String name, MethodType type)
 	{
 		CallSite callSite = new MutableCallSite(type);
-		MethodHandle fallback = FALLBACK.bindTo(callSite)
+		MethodHandle target = fallback.bindTo(callSite)
 			// -1: function
 			.asCollector(LilaObject[].class, type.parameterCount() - 1);
-	    callSite.setTarget(fallback);
+	    callSite.setTarget(target);
 		return callSite;
 	}
 
@@ -138,14 +141,14 @@ public class RT {
 			throw new RuntimeException("unable to call: " + object);
     }
 
-	static final MethodHandle FALLBACK;
+	static final MethodHandle fallback;
 	static {
 		try {
 			MethodType fallbackType =
 				methodType(LilaObject.class,
 				                      MutableCallSite.class, LilaObject.class,
 				                      LilaObject[].class);
-			FALLBACK = lookup.findStatic(RT.class, "fallback", fallbackType);
+			fallback = lookup.findStatic(RT.class, "fallback", fallbackType);
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }

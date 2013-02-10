@@ -19,13 +19,25 @@ module Lila
       Identifier.new(name.to_s)
     }
 
-    rule(:parameters => simple(:parameter)) {
-      if parameter.instance_of? String then []
-      else [parameter] end
+    rule(:required_parameters => simple(:parameter)) {
+      ParameterList.new(if parameter.instance_of? String then []
+                        else [parameter] end)
     }
 
-    rule(:parameters => sequence(:parameters)) {
-      parameters
+    rule(:required_parameters => simple(:parameter),
+         :rest_parameter => simple(:rest_parameter)) {
+      parameters = if parameter.instance_of? String then []
+                   else [parameter] end
+      ParameterList.new(parameters + [rest_parameter], true)
+    }
+
+    rule(:required_parameters => sequence(:parameters)) {
+      ParameterList.new parameters
+    }
+
+    rule(:required_parameters => sequence(:parameters),
+         :rest_parameter => simple(:rest_parameter)) {
+      ParameterList.new parameters + [rest_parameter], true
     }
 
     rule(:parameter => simple(:parameter)) {
@@ -67,17 +79,17 @@ module Lila
 
     rule(:function_definition =>
          {:identifier => simple(:name),
-          :parameters => sequence(:parameters),
+          :parameter_list => simple(:parameter_list),
           :body => sequence(:statements)}) {
       VariableDefinition.new(name.to_s,
-        Function.new(parameters, statements))
+        Function.new(parameter_list, statements))
     }
 
     rule(:method_definition =>
          {:identifier => simple(:name),
-          :parameters => sequence(:parameters),
+          :parameter_list => simple(:parameter_list),
           :body => sequence(:statements)}) {
-      MethodDefinition.new(name.to_s, parameters, statements)
+      MethodDefinition.new(name.to_s, parameter_list, statements)
     }
 
     rule(:class_definition =>
@@ -86,9 +98,9 @@ module Lila
       ClassDefinition.new(name.to_s, superclasses)
     }
 
-    rule(:parameters => sequence(:parameters),
+    rule(:parameter_list => simple(:parameter_list),
          :body => sequence(:statements)) {
-      Function.new(parameters, statements)
+      Function.new(parameter_list, statements)
     }
 
     rule(:test => simple(:test),
@@ -138,7 +150,7 @@ module Lila
 
   module Macros
     def Macros.bind(name, value, expressions)
-      Call.new(Function.new([Parameter.new(name)], expressions),
+      Call.new(Function.new(ParameterList.new([Parameter.new(name)]), expressions),
                Arguments.new([value]))
     end
   end

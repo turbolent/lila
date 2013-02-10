@@ -6,6 +6,7 @@ java_import 'lila.runtime.LilaString'
 java_import 'lila.runtime.LilaInteger'
 java_import 'lila.runtime.LilaBoolean'
 java_import 'lila.runtime.LilaFunction'
+java_import 'lila.runtime.LilaArray'
 java_import 'lila.runtime.RT'
 java_import 'lila.runtime.StringNames'
 
@@ -19,7 +20,7 @@ module Lila
   class Program < Struct.new :statements; end
 
   class MethodDefinition < Struct.new \
-    :name, :parameters, :expressions
+    :name, :parameter_list, :expressions
   end
 
   class ClassDefinition < Struct.new :name, :superclasses; end
@@ -94,10 +95,10 @@ module Lila
 
     def compile(context, builder)
       if @parameter
-        index = @parameter.function.parameter_index(@parameter)
+        index = @parameter.function.parameter_list.index(@parameter)
         builder.aload index
       else
-        bootstrap = builder.h_invokestatic RT, "bootstrapValue",
+        bootstrap = builder.h_invokestatic RT, 'bootstrapValue',
           CallSite, Lookup, Java::java.lang.String, MethodType
         encoded_name = StringNames.toBytecodeName(@name)
         builder.invokedynamic encoded_name, [LilaObject], bootstrap
@@ -121,39 +122,49 @@ module Lila
     end
   end
 
-  class Function < Expression
-    attr_reader :closed_parameters, :parameters
+  class ParameterList
 
-    def initialize(parameters, expressions)
-      self.parameters = parameters
-      @expressions = expressions
+    attr_reader :parameters, :closed_parameters, :rest
+
+    def initialize(parameters, rest = false)
+      @parameters = parameters
       # ordered set
+      @rest = rest
       @closed_parameters = []
     end
 
-    def parameter_index(parameter)
-      @closed_parameters.index(parameter) ||
-        (@closed_parameters.length +
-          @parameters.index(parameter))
+    def index(parameter)
+       @closed_parameters.index(parameter) ||
+         (@closed_parameters.length +
+           @parameters.index(parameter))
+    end
+
+    def length
+      @closed_parameters.length + @parameters.length
+    end
+  end
+
+  class Function < Expression
+    attr_reader :parameter_list
+
+    def initialize(parameter_list, expressions)
+      @parameter_list = parameter_list
+      parameter_list.parameters.each { |parameter|
+        parameter.function = self
+      }
+      @expressions = expressions
     end
 
     def add_closed_parameter(parameter)
-      closed_parameter = @closed_parameters.find { |p|
+      closed_parameter = @parameter_list.closed_parameters.find { |p|
         p.name == parameter.name
       }
       unless closed_parameter
         closed_parameter = ClosedParameter.new parameter
         closed_parameter.function = self
-        @closed_parameters << closed_parameter
+        @parameter_list.closed_parameters << closed_parameter
       end
       closed_parameter
-    end
-
-    def parameters=(parameters)
-      @parameters = parameters
-      @parameters.each { |parameter|
-        parameter.function = self
-      }
     end
 
     def compile(context, builder)
@@ -162,8 +173,11 @@ module Lila
       close context
 
       # define new toplevel method
-      param_count = (@closed_parameters.length + @parameters.length)
-      param_type = [LilaObject] * param_count
+      param_type = [LilaObject] * @parameter_list.length
+      # rest parameter is of type LilaArray
+      if @parameter_list.rest then
+        param_type[-1] = LilaArray
+      end
 
       builder.class_builder.public_static_method name, [],
         LilaObject, *param_type do |method|
@@ -176,7 +190,8 @@ module Lila
       # ensure function is registered after class is loaded,
       # so bootstrap (lookup) will succeed
       function_type = [LilaObject] + param_type
-      context.register_internal_function name, function_type
+      context.register_internal_function name, function_type,
+        @parameter_list.rest
 
       # link function value
       bootstrap = builder.h_invokestatic RT, 'bootstrapFunction',
@@ -184,10 +199,10 @@ module Lila
       encoded_name = StringNames.toBytecodeName(name)
       builder.invokedynamic encoded_name, [LilaFunction], bootstrap
 
-      unless @closed_parameters.empty?
-        @closed_parameters.each { |closed_parameter|
+      unless @parameter_list.closed_parameters.empty?
+        @parameter_list.closed_parameters.each { |closed_parameter|
           target_parameter = closed_parameter.parameter
-          index = target_parameter.function.parameter_index(target_parameter)
+          index = target_parameter.function.parameter_list.index(target_parameter)
           builder.aload index
           close_type = [LilaFunction, LilaObject]
           builder.invokevirtual LilaFunction, 'close', close_type
@@ -238,7 +253,7 @@ module Lila
     def compile(context, builder)
       @expression.compile(context, builder)
       @arguments.compile(context, builder)
-      bootstrap = builder.h_invokestatic RT, "bootstrapCall",
+      bootstrap = builder.h_invokestatic RT, 'bootstrapCall',
         CallSite, Lookup, Java::java.lang.String, MethodType
       # +2: return value, function argument
       type = [LilaObject] * (2 + @arguments.length)

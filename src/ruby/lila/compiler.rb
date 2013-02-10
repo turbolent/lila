@@ -32,16 +32,16 @@ module Lila
       @functions = {}
     end
 
-    def register_internal_function(name, type)
+    def register_internal_function(name, type, rest)
       if @parent
-        @parent.register_internal_function name, type
+        @parent.register_internal_function name, type, rest
       else
-        @functions[name] = type
+        @functions[name] = [type, rest]
       end
     end
 
     def find_parameter(name)
-      (@function.parameters.find { |parameter|
+      (@function.parameter_list.parameters.find { |parameter|
         parameter.name == name
        } if @function) || @parent.find_parameter(name) if @parent
     end
