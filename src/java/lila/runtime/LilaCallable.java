@@ -10,6 +10,8 @@ abstract class LilaCallable extends LilaObject {
 
 	abstract LilaCallable close(LilaObject value);
 
+	abstract LilaObject apply(LilaObject[] arguments);
+
 	abstract LilaObject fallback
 		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable;

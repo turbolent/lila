@@ -23,6 +23,7 @@ public class LilaGenericFunction extends LilaCallable {
 		super(lilaClass);
 	}
 
+	@Override
 	public LilaGenericFunction close(LilaObject value) {
 		LilaGenericFunction gf = new LilaGenericFunction();
 		gf.closedArguments = new ArrayList<LilaObject>();
@@ -30,6 +31,12 @@ public class LilaGenericFunction extends LilaCallable {
 		gf.closedArguments.add(value);
 		gf.methods = this.methods;
 		return gf;
+	}
+
+	@Override
+	public LilaObject apply(LilaObject[] arguments) {
+		//TODO:
+		return null;
 	}
 
 	public void addMethod(MethodHandle methodHandle,
@@ -53,5 +60,9 @@ public class LilaGenericFunction extends LilaCallable {
 		System.out.println("GF CALL");
 		return null;
 	}
+
+
+
+
 
 }

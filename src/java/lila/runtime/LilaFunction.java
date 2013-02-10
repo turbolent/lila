@@ -32,6 +32,15 @@ public class LilaFunction extends LilaCallable {
 		function.hasRest = this.hasRest;
 		return function;
 	}
+
+	@Override
+	public LilaObject apply(LilaObject[] arguments) {
+		try {
+			return (LilaObject)methodHandleForArguments(this, arguments.length)
+					.invokeWithArguments((Object[])arguments);
+		} catch (Throwable e) {
+			return null;
+		}
 	}
 
 	@Override

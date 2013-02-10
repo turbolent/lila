@@ -224,4 +224,17 @@ public class Core {
 		                   methodType(LilaBoolean.class,
 		                              LilaObject.class, LilaObject.class));
 	}
+
+	// apply
+
+	// TODO: make generic for LilaCallable
+	static LilaObject apply(LilaFunction function, LilaArray arguments) {
+		return function.apply(arguments.array);
+	}
+
+	static {
+		exposeCoreFunction("apply",
+		                   methodType(LilaObject.class,
+		                              LilaFunction.class, LilaArray.class));
+	}
 }
