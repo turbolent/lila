@@ -1,6 +1,8 @@
 package lila.runtime;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class LilaClass extends LilaObject {
 
@@ -11,12 +13,15 @@ public class LilaClass extends LilaObject {
 	private Class<?> javaClass;
 	private boolean builtin;
 	private LilaClass[] superclasses;
+	private List<LilaClass> allSuperclasses;
 
-	LilaClass(boolean builtin, String name, Class<?> javaClass) {
+	public LilaClass(boolean builtin, String name, Class<?> javaClass) {
 		this(builtin, name, javaClass, null);
 	}
 
-	LilaClass(boolean builtin, String name, Class<?> javaClass, LilaClass[] superclasses) {
+	public LilaClass(boolean builtin, String name,
+	          Class<?> javaClass, LilaClass[] superclasses)
+	{
 		super(lilaClass);
 		this.builtin = builtin;
 		this.name = name;
@@ -24,6 +29,17 @@ public class LilaClass extends LilaObject {
 		if (superclasses == null)
 			superclasses = new LilaClass[] { LilaObject.lilaClass };
 		this.superclasses = superclasses;
+		// workaround for mutual dependency between LilaClass and LilaObject
+		if (javaClass == LilaClass.class) {
+			// LilaObject.lilaClass still null, delay until LilaObject
+			return;
+		}
+		if (javaClass == LilaObject.class) {
+			LilaClass.lilaClass.superclasses = new LilaClass[] { this };
+			LilaClass.lilaClass.allSuperclasses =
+				Arrays.asList(new LilaClass[] { LilaClass.lilaClass, this });
+		}
+		this.allSuperclasses = C3.computeClassLinearization(this);
 	}
 
 	// wrapper, called from programs with lila objects
@@ -35,8 +51,9 @@ public class LilaClass extends LilaObject {
 		LilaClass[] actualSuperclasses = null;
 		if (arguments.length > 1) {
 			LilaObject[] superclasses = ((LilaArray)arguments[1]).array;
-			actualSuperclasses = Arrays.copyOf(superclasses, superclasses.length,
-			                                   LilaClass[].class);
+			actualSuperclasses =
+				Arrays.copyOf(superclasses, superclasses.length,
+				              LilaClass[].class);
 		}
 		return make(name, actualSuperclasses);
 	}
@@ -58,6 +75,14 @@ public class LilaClass extends LilaObject {
 
 	public Class<?> getJavaClass() {
 		return this.javaClass;
+	}
+
+	public LilaClass[] getDirectSuperclasses() {
+		return this.superclasses;
+	}
+
+	public List<LilaClass> getAllSuperclasses() {
+		return this.allSuperclasses;
 	}
 
 	public boolean isSubtypeOf(LilaClass other) {
