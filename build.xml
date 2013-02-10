@@ -1,6 +1,14 @@
 <project name="lila" basedir="." default="compile">
   <property name="src" value="src/java" />
   <property name="build" value="build" />
+  <property name="lib" value="lib" />
+
+  <path id="classpath">
+    <fileset dir="${lib}">
+      <include name="*.jar"/>
+    </fileset>
+    <pathelement path="${build}"/>
+  </path>
 
   <target name="clean">
     <delete dir="${build}" />
@@ -12,6 +20,7 @@
            destdir="${build}"
            includeantruntime="false">
       <include name="**/*.java" />
+      <classpath refid="classpath"/>
     </javac>
   </target>
 </project>
