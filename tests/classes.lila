@@ -25,14 +25,15 @@ assert(not(subtype?(<foo>, <bar>)));
 
 // multiple inheritance
 
-define class <baz> (<foo>, <bar>);
+define class <blub> (<foo>);
+define class <baz> (<bar>, <blub>);
 
 assert(subtype?(<baz>, <foo>));
 assert(subtype?(<baz>, <bar>));
 
 // use make to create a class
 
-define <baz2> = make(<class>, "<baz2>", make-array(<foo>, <bar>));
+define <baz2> = make(<class>, "<baz2>", make-array(<bar>, <blub>));
 
 assert(subtype?(<baz2>, <foo>));
 assert(subtype?(<baz2>, <bar>));

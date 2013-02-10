@@ -19,8 +19,7 @@ public class LilaString extends LilaObject {
 
 	@Override
 	public String toString() {
-		String escaped =
-			StringEscapeUtils.escapeJava(this.string);
+		String escaped = StringEscapeUtils.escapeJava(this.string);
 		return "\"" + escaped + "\"";
 	}
 }
