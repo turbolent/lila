@@ -129,17 +129,17 @@ public class Core {
 
 	// random-argument
 
-	static LilaObject randomArgument(LilaObject ignored, LilaObject[] rest) {
+	static LilaObject randomArgument(LilaObject ignored, LilaArray rest) {
 		Random random = new Random();
-		return rest[random.nextInt(rest.length)];
+		LilaObject[] objects = rest.array;
+		return objects[random.nextInt(objects.length)];
 	}
 
 	static {
 		LilaFunction randomArgument =
 			exposeCoreFunction("random-argument", "randomArgument",
 			                   methodType(LilaObject.class,
-			                              LilaObject.class, LilaObject[].class));
-		randomArgument.requiredParameterCount = 1;
+			                              LilaObject.class, LilaArray.class));
 		randomArgument.hasRest = true;
 	}
 
@@ -149,7 +149,7 @@ public class Core {
 		methodType(LilaObject.class,
 		           LilaObject[].class);
 
-	static LilaObject make(LilaClass lilaClass, LilaObject[] rest)
+	static LilaObject make(LilaClass lilaClass, LilaArray rest)
 		throws Throwable
 	{
 		Class<?> javaClass = lilaClass.getJavaClass();
@@ -157,7 +157,7 @@ public class Core {
 		if (lilaClass.isBuiltin()) {
 			MethodHandle mh = lookup
 				.findStatic(javaClass, "make", builtinMakeType);
-			object = (LilaObject)mh.invokeExact(rest);
+			object = (LilaObject)mh.invokeExact(rest.array);
 		} else {
 			object = new LilaObject(lilaClass);
 		}
@@ -168,8 +168,7 @@ public class Core {
 		LilaFunction make =
 			exposeCoreFunction("make",
 			                   methodType(LilaObject.class,
-			                              LilaClass.class, LilaObject[].class));
-		make.requiredParameterCount = 1;
+			                              LilaClass.class, LilaArray.class));
 		make.hasRest = true;
 	}
 
@@ -202,16 +201,15 @@ public class Core {
 
 	// make-array
 
-	static LilaArray makeArray(LilaObject[] rest) {
-		return new LilaArray(rest);
+	static LilaArray makeArray(LilaArray rest) {
+		return rest;
 	}
 
 	static {
 		LilaFunction makeArray =
 			exposeCoreFunction("make-array", "makeArray",
 			                   methodType(LilaArray.class,
-			                              LilaObject[].class));
-		makeArray.requiredParameterCount = 0;
+			                              LilaArray.class));
 		makeArray.hasRest = true;
 	}
 

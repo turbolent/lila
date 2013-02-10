@@ -14,7 +14,5 @@ abstract class LilaCallable extends LilaObject {
 		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable;
 
-	int requiredParameterCount;
 	boolean hasRest = false;
-
 }

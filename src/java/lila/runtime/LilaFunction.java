@@ -5,6 +5,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.Arrays;
+
 import static java.lang.invoke.MethodType.methodType;
 
 public class LilaFunction extends LilaCallable {
@@ -17,9 +19,6 @@ public class LilaFunction extends LilaCallable {
 	public LilaFunction(MethodHandle methodHandle) {
 		super(lilaClass);
 		this.methodHandle = methodHandle;
-		// all parameters are required by default
-		this.requiredParameterCount =
-			methodHandle.type().parameterCount();
 	}
 
 	@Override
@@ -27,8 +26,12 @@ public class LilaFunction extends LilaCallable {
 		return methodHandle;
 	}
 
+	@Override
 	public LilaFunction close(LilaObject value) {
-		return new LilaFunction(this.methodHandle.bindTo(value));
+		LilaFunction function = new LilaFunction(this.methodHandle.bindTo(value));
+		function.hasRest = this.hasRest;
+		return function;
+	}
 	}
 
 	@Override
@@ -45,33 +48,46 @@ public class LilaFunction extends LilaCallable {
 		return mh == target;
 	}
 
+	private MethodHandle methodHandleForArguments
+		(LilaFunction function, int argumentCount)
+	{
+		MethodHandle mh = function.methodHandle;
+		int requiredParameterCount = mh.type().parameterCount();
+		if (function.hasRest)
+			requiredParameterCount--;
+
+		// variable argument function?
+		if (argumentCount >= requiredParameterCount && function.hasRest) {
+			// create adapter boxing additional arguments array
+			int pos = requiredParameterCount;
+			mh = MethodHandles.filterArguments(mh, pos, boxAsArray);
+			// create adapter collecting additional arguments
+			int count = (argumentCount
+						 - requiredParameterCount);
+			mh = mh.asCollector(LilaObject[].class, count);
+		}
+		return mh;
+	}
+
+
+
 	@Override
 	public LilaObject fallback
 		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable
 	{
 		LilaFunction function = (LilaFunction)callable;
-		MethodHandle mh = function.methodHandle;
 		MethodType callSiteType = callSite.type();
-		int actualCallSiteParameterCount = callSiteType.parameterCount() - 1;
+		int argumentCount = callSiteType.parameterCount() - 1;
 
-		// variable argument function?
-		// create adapter collecting additional arguments
-		if (actualCallSiteParameterCount >= function.requiredParameterCount
-			&& function.hasRest)
-		{
-			int count = (actualCallSiteParameterCount
-						 - function.requiredParameterCount);
-			mh = mh.asCollector(LilaObject[].class, count);
-		}
-
+		MethodHandle mh = methodHandleForArguments(function, argumentCount);
 		// adapter that drops first argument (function) and
 		// calls the actual method handle
 		MethodHandle target = MethodHandles
 			.dropArguments(mh, 0, LilaObject.class)
 			.asType(callSiteType);
 
-		MethodHandle mhTest = CHECK_MH.bindTo(target);
+		MethodHandle mhTest = checkMH.bindTo(target);
 
 		MethodType mhTestType = mhTest.type()
 			.changeParameterType(0, callSiteType.parameterType(0));
@@ -79,24 +95,31 @@ public class LilaFunction extends LilaCallable {
 
 		// ATM not a cache, always changing target in this fallback
 		// if method handle changes
-		MethodHandle fallback = RT.FALLBACK.bindTo(callSite)
+		MethodHandle fallback = RT.fallback.bindTo(callSite)
 			// -1: function
 			.asCollector(LilaObject[].class,
-			             actualCallSiteParameterCount);
+			             argumentCount);
 
 		MethodHandle guard =
 			MethodHandles.guardWithTest(mhTest, target, fallback);
 		callSite.setTarget(guard);
+
 		return (LilaObject)mh.invokeWithArguments((Object[])args);
 	}
 
-	static final Lookup LOOKUP = MethodHandles.lookup();
-	private static final MethodHandle CHECK_MH;
+	static final Lookup lookup = MethodHandles.lookup();
+	private static final MethodHandle checkMH;
+	private static MethodHandle boxAsArray;
 	static {
 		try {
-			MethodType checkMHType = methodType(boolean.class,
-			                                    MethodHandle.class, LilaObject.class);
-			CHECK_MH = LOOKUP.findStatic(LilaFunction.class, "checkMH", checkMHType);
+			checkMH = lookup
+				.findStatic(LilaFunction.class, "checkMH",
+				            methodType(boolean.class,
+				                       MethodHandle.class, LilaObject.class));
+			boxAsArray = lookup
+				.findConstructor(LilaArray.class,
+				                 methodType(void.class,
+				                            LilaObject[].class));
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }
