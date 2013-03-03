@@ -3,18 +3,21 @@ package lila.runtime.dispatch;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import lila.runtime.LilaClass;
+import lila.runtime.LilaObject;
 
 
 abstract class Node {
-	abstract Method evaluate();
+	abstract Method evaluate(ExpressionEnvironment env);
 
 
 	// Debugging
@@ -42,38 +45,41 @@ abstract class Node {
 	}
 }
 
+
+class LilaClassComparator implements Comparator<LilaClass> {
+
+	static LilaClassComparator COMPARATOR = new LilaClassComparator();
+
+	public int compare(LilaClass class1, LilaClass class2) {
+		return class1.isSubtypeOf(class2) ? -1 : 1;
+	}
+}
+
+
 class InteriorNode extends Node {
-	Map<Node, Set<LilaClass>> edges = new HashMap<>();
+
+	TreeMap<LilaClass,Node> edges =
+		new TreeMap<>(LilaClassComparator.COMPARATOR);
+
 	Expression expression;
 
 	@Override
-	public Method evaluate() {
-		return null;
-		// TODO:
-		// Instance v = this.expression.evaluate();
-		// Node target = null;
-		// for (Edge edge : this.edges)
-		// if (edge.clazz.isInstance(v)) {
-		// target = edge.target;
-		// break;
-		// }
-		// if (target == null) {
-		// String message = String.format("Node evaluation exception: unable "
-		// + "to find edge for result %s", v);
-		// throw new RuntimeException(message);
-		// }
-		// return target.evaluate();
-	}
-
-	void addEdge(LilaClass c, Node targetNode) {
-		Set<LilaClass> classes = edges.get(targetNode);
-		if (classes == null) {
-			classes = new LinkedHashSet<>();
-			edges.put(targetNode, classes);
+	public Method evaluate(ExpressionEnvironment env) {
+		LilaObject v = this.expression.evaluate(env);
+		Node target = null;
+		for (Entry<LilaClass,Node> entry : this.edges.entrySet())
+			if (entry.getKey() == v.getType()) {
+				target = entry.getValue();
+				break;
+			}
+		if (target == null) {
+			String message =
+				String.format("Node evaluation exception: unable "
+					+ "to find edge for result %s", v);
+			throw new RuntimeException(message);
 		}
-		classes.add(c);
+		return target.evaluate(env);
 	}
-
 
 	// Debugging
 
@@ -88,11 +94,23 @@ class InteriorNode extends Node {
 		out.write(String
 			.format("%s [label=\"%s\", xlabel=\"cs=%s\\nes=%s\"];\n", name,
 					this.expression.name, caseNames(), expressionNames()));
-		for (Node targetNode : this.edges.keySet())
+		// group edges by class
+		Map<Node,Set<LilaClass>> edges = new HashMap<>();
+		for (Entry<LilaClass, Node> entry : this.edges.entrySet()) {
+			Node node = entry.getValue();
+			Set<LilaClass> classes = edges.get(node);
+			if (classes == null) {
+				classes = new LinkedHashSet<>();
+				edges.put(node, classes);
+			}
+			classes.add(entry.getKey());
+		}
+		for (Entry<Node, Set<LilaClass>> entry : edges.entrySet()) {
+			Node targetNode = entry.getKey();
 			targetNode.dump(out);
-		for (Entry<Node, Set<LilaClass>> entry : this.edges.entrySet())
 			out.write(String.format("%s -> %s [label=\"%s\"];\n", name,
-									entry.getKey().name, entry.getValue()));
+									targetNode.name, entry.getValue()));
+		}
 	}
 }
 
@@ -100,7 +118,7 @@ class LeafNode extends Node {
 	Method method;
 
 	@Override
-	public Method evaluate() {
+	public Method evaluate(ExpressionEnvironment env) {
 		return this.method;
 	}
 

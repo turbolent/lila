@@ -25,4 +25,6 @@ public class LilaNegatedClass extends LilaClass {
 	public LilaClass negate() {
 		return this.value;
 	}
+
+	// TODO: isInstance, isSubtypeOf
 }

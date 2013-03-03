@@ -12,19 +12,19 @@ import lila.runtime.LilaNegatedClass;
 import lila.runtime.LilaTrue;
 
 
-class Environment extends HashMap<String, Expression> {}
+class PredicateEnvironment extends HashMap<String, Expression> {}
 
 abstract class Predicate {
 	// TODO:
 	// abstract boolean evaluate();
 
 	Predicate canonicalize() {
-		return this.prepareForDNF(new Environment())
+		return this.prepareForDNF(new PredicateEnvironment())
 			.toNNF().toDNF().postProcessDNF();
 	}
 
 	// Step 1-2: resolve variables, remove empty predicates
-	Predicate prepareForDNF(Environment env) {
+	Predicate prepareForDNF(PredicateEnvironment env) {
 		return this;
 	};
 
@@ -78,7 +78,7 @@ class InstanceofPredicate extends Predicate {
 	}
 
 	@Override
-	public Predicate prepareForDNF(Environment env) {
+	public Predicate prepareForDNF(PredicateEnvironment env) {
 		this.expression = this.expression.resolve(env);
 		return this;
 	}
@@ -129,7 +129,7 @@ class TestPredicate extends Predicate {
 	}
 
 	@Override
-	public Predicate prepareForDNF(Environment env) {
+	public Predicate prepareForDNF(PredicateEnvironment env) {
 		return new InstanceofPredicate(this.expression.resolve(env),
 										LilaTrue.lilaClass);
 	}
@@ -158,7 +158,7 @@ class BindingPredicate extends Predicate {
 	// }
 
 	@Override
-	public Predicate prepareForDNF(Environment env) {
+	public Predicate prepareForDNF(PredicateEnvironment env) {
 		env.put(this.name, this.expression.resolve(env));
 		return null;
 	}
@@ -185,7 +185,7 @@ class NotPredicate extends Predicate {
 	// }
 
 	@Override
-	Predicate prepareForDNF(Environment env) {
+	Predicate prepareForDNF(PredicateEnvironment env) {
 		Predicate prepared = this.predicate.prepareForDNF(env);
 		if (prepared == null)
 			return null;
@@ -243,7 +243,7 @@ abstract class BinaryPredicate extends Predicate {
 	}
 
 	@Override
-	Predicate prepareForDNF(Environment env) {
+	Predicate prepareForDNF(PredicateEnvironment env) {
 		Predicate preparedLeft = this.left.prepareForDNF(env);
 		Predicate preparedRight = this.right.prepareForDNF(env);
 		if (preparedLeft != null && preparedRight != null) {

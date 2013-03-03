@@ -24,9 +24,13 @@ import lila.runtime.LilaObject;
 
 class DAGBuilder {
 
-	static Method notUnderstood = new Method("NOT_UNDERSTOOD");
-	static Method ambiguous = new Method("AMBIGUOUS");
-
+	// TODO:
+	static Method notUnderstood = new Method(null);
+	static Method ambiguous = new Method(null);
+	static {
+		notUnderstood.identifier = "NOT_UNDERSTOOD";
+		ambiguous.identifier = "AMBIGUOUS";
+	}
 
 	// TODO: check actual dependencies based on static information,
 	//       e.g. evaluation of e2 would not encounter an error
@@ -113,9 +117,8 @@ class DAGBuilder {
 	Map<Pair<Set<Case>,Set<Expression>>,Node> memo = new HashMap<>();
 
 	Node buildLookupDAG(DispatchFunction df) {
-		Set<Case> cases = df.getCases();
-		this.constraints = constraints(cases, df.inputExpressions);
-		return buildSubDAG(cases, allExpressions(cases));
+		this.constraints = constraints(df.cases, df.inputExpressions);
+		return buildSubDAG(df.cases, allExpressions(df.cases));
 	}
 
 	Node buildSubDAG(Set<Case> cases, Set<Expression> expressions) {
@@ -138,7 +141,7 @@ class DAGBuilder {
 				Set<Expression> targetExpressions =
 					targetExpressions(expressions, targetCases, expression);
 				Node targetNode = buildSubDAG(targetCases, targetExpressions);
-				interiorNode.addEdge(clazz, targetNode);
+				interiorNode.edges.put(clazz, targetNode);
 			}
 		}
 		this.memo.put(pair, node);

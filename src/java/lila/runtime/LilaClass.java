@@ -93,10 +93,18 @@ public class LilaClass extends LilaObject {
 	public boolean isSubtypeOf(LilaClass other) {
 		if (other == this)
 			return true;
-		for (LilaClass superclass : this.allSuperclasses) {
+		for (LilaClass superclass : this.allSuperclasses)
 			if (superclass == other)
 				return true;
-		}
+		return false;
+	}
+
+	public boolean isInstance(LilaObject object) {
+		if (object.getType() == this)
+			return true;
+		for (LilaClass subclass : this.allSubclasses)
+			if (subclass == object.getType())
+				return true;
 		return false;
 	}
 
@@ -109,4 +117,5 @@ public class LilaClass extends LilaObject {
 		String name = (this.name == null ? "" : " " + this.name);
 		return "#[Class" + name + "]";
 	}
+
 }

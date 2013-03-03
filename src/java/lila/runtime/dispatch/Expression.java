@@ -1,20 +1,19 @@
 package lila.runtime.dispatch;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 import lila.runtime.LilaClass;
 import lila.runtime.LilaObject;
 
+
+class ExpressionEnvironment extends HashMap<String, LilaObject> {}
+
 abstract class Expression {
-	// TODO: LilaBoolean ?
-	abstract LilaObject evaluate();
+	abstract LilaObject evaluate(ExpressionEnvironment env);
 
-	abstract Expression resolve(Environment env);
-
-	Expression negate() {
-		return new NotExpression(this);
-	}
+	abstract Expression resolve(PredicateEnvironment env);
 
 	// Static information
 
@@ -36,31 +35,6 @@ abstract class Expression {
 	String name;
 }
 
-class NotExpression extends Expression {
-	Expression expression;
-
-	NotExpression(Expression expression) {
-		this.expression = expression;
-	}
-
-	@Override
-	public String toString() {
-		return "not(" + this.expression + ")";
-	}
-
-	@Override
-	LilaObject evaluate() {
-		// TODO
-		return null;
-	}
-
-	Expression resolve(Environment env) {
-		this.expression = this.expression.resolve(env);
-		return this;
-	}
-
-}
-
 class Var extends Expression {
 	String identifier;
 
@@ -69,9 +43,8 @@ class Var extends Expression {
 	}
 
 	@Override
-	public LilaObject evaluate() {
-		// TODO
-		return null;
+	public LilaObject evaluate(ExpressionEnvironment env) {
+		return env.get(this.identifier);
 	}
 
 	@Override
@@ -79,7 +52,7 @@ class Var extends Expression {
 		return this.identifier;
 	}
 
-	Expression resolve(Environment env) {
+	Expression resolve(PredicateEnvironment env) {
 		Expression subst = env.get(this.identifier);
 		if (subst == null)
 			return this;
@@ -126,7 +99,7 @@ class BinaryExpression extends Expression {
 	}
 
 	@Override
-	public LilaObject evaluate() {
+	public LilaObject evaluate(ExpressionEnvironment env) {
 		// TODO
 		return null;
 	}
@@ -138,7 +111,7 @@ class BinaryExpression extends Expression {
 	}
 
 	@Override
-	Expression resolve(Environment env) {
+	Expression resolve(PredicateEnvironment env) {
 		this.left = this.left.resolve(env);
 		this.right = this.right.resolve(env);
 		return this;

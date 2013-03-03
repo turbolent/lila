@@ -1,5 +1,8 @@
 package lila.runtime.dispatch;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import lila.runtime.LilaClass;
@@ -175,8 +178,10 @@ public class Test {
 		exp2.name = "e2";
 		exp2.staticClasses = staticClasses;
 
-		final Method m1 = new Method("Cons");
-		final Method m2 = new Method("Nil");
+		final Method m1 = new Method(null);
+		m1.identifier = "Cons";
+		final Method m2 = new Method(null);
+		m2.identifier = "Nil";
 
 		Predicate pred1 =
 			new AndPredicate(new InstanceofPredicate(exp1, cons),
@@ -186,18 +191,22 @@ public class Test {
 			                 new InstanceofPredicate(exp2, nil));
 
 
-		GenericFunction gf = new GenericFunction();
-		gf.methods.put(pred1, m1);
-		gf.methods.put(pred2, m2);
+		Map<Predicate, Method> methods = new HashMap<>();
+		methods.put(pred1, m1);
+		methods.put(pred2, m2);
 
-		System.out.println(gf);
-
-		DispatchFunction df = DispatchFunction.convert(gf);
+		Utils.dumpMethods(methods);
+		DispatchFunction df = DispatchFunction.fromMethods(methods);
 		System.out.println(df);
 
 		DAGBuilder builder = new DAGBuilder();
 		Node node = builder.buildLookupDAG(df);
 		builder.dump(node);
 
+		ExpressionEnvironment env = new ExpressionEnvironment();
+		env.put("lst1", new LilaObject(cons));
+		env.put("lst2", new LilaObject(cons));
+
+		System.out.println(node.evaluate(env));
 	}
 }
