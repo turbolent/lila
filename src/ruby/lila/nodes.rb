@@ -81,8 +81,9 @@ module Lila
 
   class BooleanValue < Value
     def compile(context, builder)
-      builder.ldc @value
-      box_boolean builder
+    builder.getstatic LilaBoolean,
+      (if @value then :TRUE else :FALSE end),
+      LilaBoolean
     end
   end
 
@@ -175,7 +176,7 @@ module Lila
       # define new toplevel method
       param_type = [LilaObject] * @parameter_list.length
       # rest parameter is of type LilaArray
-      if @parameter_list.rest then
+      if @parameter_list.rest
         param_type[-1] = LilaArray
       end
 
