@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import lila.runtime.LilaClass;
+
 
 abstract class Node {
 	abstract Method evaluate();
@@ -41,7 +43,7 @@ abstract class Node {
 }
 
 class InteriorNode extends Node {
-	Map<Node, Set<Clazz>> edges = new HashMap<>();
+	Map<Node, Set<LilaClass>> edges = new HashMap<>();
 	Expression expression;
 
 	@Override
@@ -63,13 +65,13 @@ class InteriorNode extends Node {
 		// return target.evaluate();
 	}
 
-	void addEdge(Clazz clazz, Node targetNode) {
-		Set<Clazz> classes = edges.get(targetNode);
+	void addEdge(LilaClass c, Node targetNode) {
+		Set<LilaClass> classes = edges.get(targetNode);
 		if (classes == null) {
 			classes = new LinkedHashSet<>();
 			edges.put(targetNode, classes);
 		}
-		classes.add(clazz);
+		classes.add(c);
 	}
 
 
@@ -88,7 +90,7 @@ class InteriorNode extends Node {
 					this.expression.name, caseNames(), expressionNames()));
 		for (Node targetNode : this.edges.keySet())
 			targetNode.dump(out);
-		for (Entry<Node, Set<Clazz>> entry : this.edges.entrySet())
+		for (Entry<Node, Set<LilaClass>> entry : this.edges.entrySet())
 			out.write(String.format("%s -> %s [label=\"%s\"];\n", name,
 									entry.getKey().name, entry.getValue()));
 	}

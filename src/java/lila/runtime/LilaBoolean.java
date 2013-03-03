@@ -6,8 +6,8 @@ public abstract class LilaBoolean extends LilaObject {
 		new LilaClass(true, "<boolean>", LilaBoolean.class,
 		              LilaObject.lilaClass);
 
-	public static LilaBoolean TRUE = new LilaBoolean(true);
-	public static LilaBoolean FALSE = new LilaBoolean(false);
+	public static LilaBoolean TRUE = new LilaTrue();
+	public static LilaBoolean FALSE = new LilaFalse();
 
 	protected boolean value;
 

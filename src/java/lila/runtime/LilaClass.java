@@ -1,28 +1,33 @@
 package lila.runtime;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LilaClass extends LilaObject {
 
 	// see static initialization in LilaObject
 	public static LilaClass lilaClass;
 
-	private String name;
+	protected String name;
 	private Class<?> javaClass;
 	private boolean builtin;
 	private LilaClass[] superclasses;
 	private List<LilaClass> allSuperclasses;
+	private Set<LilaClass> allSubclasses = new HashSet<>();
 
-	public LilaClass(boolean builtin, String name, Class<?> javaClass) {
-		this(builtin, name, javaClass, null);
-	}
 
 	public LilaClass(boolean builtin, String name,
-	          Class<?> javaClass, LilaClass[] superclasses)
+        Class<?> javaClass, LilaClass... superclasses)
 	{
-		super(lilaClass);
+		this(lilaClass, builtin, name, javaClass, superclasses);
+	}
+
+	protected LilaClass(LilaClass type, boolean builtin, String name,
+        Class<?> javaClass, LilaClass... superclasses)
+	{
+		super(type);
 		this.builtin = builtin;
 		this.name = name;
 		this.javaClass = javaClass;
@@ -81,14 +86,22 @@ public class LilaClass extends LilaObject {
 		return this.allSuperclasses;
 	}
 
+	public Set<LilaClass> getAllSubclasses() {
+		return this.allSubclasses;
+	}
+
 	public boolean isSubtypeOf(LilaClass other) {
 		if (other == this)
 			return true;
-		for (LilaClass superclass : this.superclasses) {
-			if (superclass.isSubtypeOf(other))
+		for (LilaClass superclass : this.allSuperclasses) {
+			if (superclass == other)
 				return true;
 		}
 		return false;
+	}
+
+	public LilaClass negate() {
+		return new LilaNegatedClass(this);
 	}
 
 	@Override

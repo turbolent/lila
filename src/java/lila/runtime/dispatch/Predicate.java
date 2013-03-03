@@ -6,6 +6,11 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import lila.runtime.LilaClass;
+import lila.runtime.LilaObject;
+import lila.runtime.LilaNegatedClass;
+import lila.runtime.LilaTrue;
+
 
 class Environment extends HashMap<String, Expression> {}
 
@@ -49,11 +54,11 @@ abstract class Predicate {
 
 class InstanceofPredicate extends Predicate {
 	Expression expression;
-	Clazz clazz;
+	LilaClass type;
 
-	InstanceofPredicate(Expression expression, Clazz clazz) {
+	InstanceofPredicate(Expression expression, LilaClass type) {
 		this.expression = expression;
-		this.clazz = clazz;
+		this.type = type;
 	}
 
 	// TODO:
@@ -67,7 +72,7 @@ class InstanceofPredicate extends Predicate {
 		if (predicate instanceof InstanceofPredicate) {
 			InstanceofPredicate p = (InstanceofPredicate) predicate;
 			return p.expression.equals(this.expression)
-				&& p.clazz.subclasses.contains(this.clazz);
+				&& p.type.getAllSubclasses().contains(this.type);
 		}
 		return false;
 	}
@@ -84,20 +89,20 @@ class InstanceofPredicate extends Predicate {
 		return atoms;
 	}
 
-	Set<Clazz> getClasses() {
-		Set<Clazz> result = new HashSet<>();
-		if (this.clazz instanceof NegatedClazz) {
-			result.addAll(Clazz.allClasses);
-			result.removeAll(this.clazz.subclasses);
+	Set<LilaClass> getClasses() {
+		Set<LilaClass> result = new HashSet<>();
+		if (this.type instanceof LilaNegatedClass) {
+			result.addAll(LilaObject.lilaClass.getAllSubclasses());
+			result.removeAll(this.type.getAllSubclasses());
 		} else {
-			result.addAll(this.clazz.subclasses);
+			result.addAll(this.type.getAllSubclasses());
 		}
 		return result;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("%s@%s", this.expression, this.clazz);
+		return String.format("%s@%s", this.expression, this.type);
 	}
 }
 
@@ -126,7 +131,7 @@ class TestPredicate extends Predicate {
 	@Override
 	public Predicate prepareForDNF(Environment env) {
 		return new InstanceofPredicate(this.expression.resolve(env),
-										TrueClazz.CLAZZ);
+										LilaTrue.lilaClass);
 	}
 
 	// not in DNF -> no getAtoms
@@ -215,7 +220,7 @@ class NotPredicate extends Predicate {
 			InstanceofPredicate predicate =
 				(InstanceofPredicate) this.predicate;
 			return new InstanceofPredicate(predicate.expression,
-											predicate.clazz.negate());
+											predicate.type.negate());
 		} else
 			return this;
 	}

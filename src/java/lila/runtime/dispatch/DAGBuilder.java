@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import lila.runtime.LilaClass;
+import lila.runtime.LilaObject;
+
 
 
 // TODO: DNF simplification?!
@@ -130,7 +133,7 @@ class DAGBuilder {
 			node = interiorNode;
 			Expression expression = pickExpression(expressions, cases);
 			interiorNode.expression = expression;
-			for (Clazz clazz : expression.getStaticClasses()) {
+			for (LilaClass clazz : expression.getStaticClasses()) {
 				Set<Case> targetCases = targetCases(cases, expression, clazz);
 				Set<Expression> targetExpressions =
 					targetExpressions(expressions, targetCases, expression);
@@ -185,23 +188,23 @@ class DAGBuilder {
 		}
 	}
 
-	Set<Case> targetCases(Set<Case> cases, Expression expression, Clazz clazz) {
+	Set<Case> targetCases(Set<Case> cases, Expression expression, LilaClass clazz) {
 		Set<Case> result = new HashSet<>();
 		for (Case c : cases) {
-			Set<Clazz> passingClasses = classesPassingTest(c, expression);
+			Set<LilaClass> passingClasses = classesPassingTest(c, expression);
 			if (passingClasses.contains(clazz))
 				result.add(c);
 		}
 		return result;
 	}
 
-	Set<Clazz> classesPassingTest(Case c, Expression expression) {
+	Set<LilaClass> classesPassingTest(Case c, Expression expression) {
+		Set<LilaClass> result = null;
 		if (c.getExpressions().contains(expression)) {
-			Set<Clazz> result = null;
 			for (Predicate predicate : c.getAtoms()) {
 				InstanceofPredicate atom = (InstanceofPredicate)predicate;
 				if (atom.expression.equals(expression)) {
-					Set<Clazz> classes = atom.getClasses();
+					Set<LilaClass> classes = atom.getClasses();
 					// intersection
 					if (result == null) {
 						result = new HashSet<>();
@@ -211,9 +214,12 @@ class DAGBuilder {
 					}
 				}
 			}
-			return result;
-		} else
-			return Clazz.allClasses;
+		} else {
+			// all classes
+			result = LilaObject.lilaClass.getAllSubclasses();
+		}
+		return result;
+
 	}
 
 	Set<Expression> targetExpressions

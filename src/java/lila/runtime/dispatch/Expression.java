@@ -3,8 +3,12 @@ package lila.runtime.dispatch;
 import java.util.HashSet;
 import java.util.Set;
 
+import lila.runtime.LilaClass;
+import lila.runtime.LilaObject;
+
 abstract class Expression {
-	abstract Instance evaluate();
+	// TODO: LilaBoolean ?
+	abstract LilaObject evaluate();
 
 	abstract Expression resolve(Environment env);
 
@@ -14,10 +18,10 @@ abstract class Expression {
 
 	// Static information
 
-	Set<Clazz> staticClasses;
+	Set<LilaClass> staticClasses;
 
-	Set<Clazz> getStaticClasses() {
-		return (this.staticClasses == null ? new HashSet<Clazz>()
+	Set<LilaClass> getStaticClasses() {
+		return (this.staticClasses == null ? new HashSet<LilaClass>()
 			: this.staticClasses);
 	}
 
@@ -41,11 +45,11 @@ class NotExpression extends Expression {
 
 	@Override
 	public String toString() {
-		return "NOT(" + this.expression + ")";
+		return "not(" + this.expression + ")";
 	}
 
 	@Override
-	Instance evaluate() {
+	LilaObject evaluate() {
 		// TODO
 		return null;
 	}
@@ -65,7 +69,7 @@ class Var extends Expression {
 	}
 
 	@Override
-	public Instance evaluate() {
+	public LilaObject evaluate() {
 		// TODO
 		return null;
 	}
@@ -122,7 +126,7 @@ class BinaryExpression extends Expression {
 	}
 
 	@Override
-	public Instance evaluate() {
+	public LilaObject evaluate() {
 		// TODO
 		return null;
 	}
