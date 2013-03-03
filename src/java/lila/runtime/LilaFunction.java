@@ -1,18 +1,18 @@
 package lila.runtime;
 
+import static java.lang.invoke.MethodType.methodType;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.util.Arrays;
-
-import static java.lang.invoke.MethodType.methodType;
 
 public class LilaFunction extends LilaCallable {
 
-	static LilaClass lilaClass =
-		new LilaClass(true, "<function>", LilaFunction.class);
+	public static final LilaClass lilaClass =
+		new LilaClass(true, "<function>", LilaFunction.class,
+		              LilaObject.lilaClass);
 
 	private MethodHandle methodHandle;
 

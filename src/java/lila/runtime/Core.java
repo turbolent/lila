@@ -24,7 +24,7 @@ public class Core {
 		}
 	}
 
-	static LilaFunction exposeCoreFunction
+	static LilaFunction exportFunction
 		(String exportedName, String name, MethodType type)
 	{
 		LilaFunction function = makeLilaFunction(Core.class, name, type);
@@ -32,8 +32,27 @@ public class Core {
 		return function;
 	}
 
-	static LilaFunction exposeCoreFunction(String name, MethodType type) {
-		return exposeCoreFunction(name, name, type);
+	static LilaFunction exportFunction(String name, MethodType type) {
+		return exportFunction(name, name, type);
+	}
+
+	static void exportClass(LilaClass c) {
+		System.out.println("export class: " + c);
+		RT.ENV.put(c.name, c);
+	}
+
+	static void initialize() {
+		RT.ENV.put("*lila-version*", new LilaString("0.1"));
+		exportClass(LilaObject.lilaClass);
+		exportClass(LilaClass.lilaClass);
+		exportClass(LilaNegatedClass.lilaClass);
+		exportClass(LilaBoolean.lilaClass);
+		exportClass(LilaFalse.lilaClass);
+		exportClass(LilaTrue.lilaClass);
+		exportClass(LilaFunction.lilaClass);
+		exportClass(LilaGenericFunction.lilaClass);
+		exportClass(LilaInteger.lilaClass);
+		exportClass(LilaString.lilaClass);
 	}
 
 	//// functions
@@ -46,8 +65,8 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("not", methodType(LilaBoolean.class,
-		                                     LilaObject.class));
+		exportFunction("not", methodType(LilaBoolean.class, LilaObject.class));
+
 	}
 
 	// assert
@@ -59,7 +78,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("assert", "assertTrue",
+		exportFunction("assert", "assertTrue",
 		                   methodType(LilaBoolean.class,
 		                              LilaObject.class));
 	}
@@ -72,7 +91,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("print", methodType(LilaString.class,
+		exportFunction("print", methodType(LilaString.class,
 		                                       LilaString.class));
 	}
 
@@ -83,7 +102,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("as-string", "asString",
+		exportFunction("as-string", "asString",
 		                   methodType(LilaString.class,
 		                              LilaObject.class));
 	}
@@ -96,7 +115,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("+", "plus",
+		exportFunction("+", "plus",
 		                   methodType(LilaInteger.class,
 		                              LilaInteger.class, LilaInteger.class));
 	}
@@ -109,7 +128,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("-", "minus",
+		exportFunction("-", "minus",
 		                   methodType(LilaInteger.class,
 		                              LilaInteger.class, LilaInteger.class));
 	}
@@ -121,7 +140,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("<", "lessThan",
+		exportFunction("<", "lessThan",
 		                   methodType(LilaBoolean.class,
 		                              LilaInteger.class, LilaInteger.class));
 	}
@@ -137,7 +156,7 @@ public class Core {
 
 	static {
 		LilaFunction randomArgument =
-			exposeCoreFunction("random-argument", "randomArgument",
+			exportFunction("random-argument", "randomArgument",
 			                   methodType(LilaObject.class,
 			                              LilaObject.class, LilaArray.class));
 		randomArgument.hasRest = true;
@@ -166,7 +185,7 @@ public class Core {
 
 	static {
 		LilaFunction make =
-			exposeCoreFunction("make",
+			exportFunction("make",
 			                   methodType(LilaObject.class,
 			                              LilaClass.class, LilaArray.class));
 		make.hasRest = true;
@@ -180,7 +199,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("object-class", "objectClass",
+		exportFunction("object-class", "objectClass",
 		                   methodType(LilaClass.class,
 		                              LilaObject.class));
 	}
@@ -193,7 +212,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("subtype?", "isSubtypeOf",
+		exportFunction("subtype?", "isSubtypeOf",
 		                   methodType(LilaBoolean.class,
 		                              LilaClass.class, LilaClass.class));
 	}
@@ -207,7 +226,7 @@ public class Core {
 
 	static {
 		LilaFunction makeArray =
-			exposeCoreFunction("make-array", "makeArray",
+			exportFunction("make-array", "makeArray",
 			                   methodType(LilaArray.class,
 			                              LilaArray.class));
 		makeArray.hasRest = true;
@@ -216,11 +235,11 @@ public class Core {
 	// ==
 
 	static LilaBoolean equals(LilaObject object, LilaObject other) {
-		return new LilaBoolean(object.equals(other));
+		return LilaBoolean.box(object.equals(other));
 	}
 
 	static {
-		exposeCoreFunction("==", "equals",
+		exportFunction("==", "equals",
 		                   methodType(LilaBoolean.class,
 		                              LilaObject.class, LilaObject.class));
 	}
@@ -233,7 +252,7 @@ public class Core {
 	}
 
 	static {
-		exposeCoreFunction("apply",
+		exportFunction("apply",
 		                   methodType(LilaObject.class,
 		                              LilaFunction.class, LilaArray.class));
 	}

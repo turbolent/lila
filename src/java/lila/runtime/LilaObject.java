@@ -3,7 +3,13 @@ package lila.runtime;
 public class LilaObject {
 
 	public static LilaClass lilaClass =
-		new LilaClass(true, "<object>", LilaObject.class, new LilaClass[] {});
+		new LilaClass(true, "<object>", LilaObject.class);
+
+	static {
+		LilaClass.lilaClass = new LilaClass(true, "<class>", LilaClass.class,
+		                                    LilaObject.lilaClass);
+	}
+
 	private LilaClass type;
 
 	public LilaObject(LilaClass type) {

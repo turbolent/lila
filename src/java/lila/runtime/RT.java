@@ -19,20 +19,6 @@ public class RT {
 
 	protected static Map<String,LilaObject> ENV = new HashMap<>();
 
-	static {
-		ENV.put("*lila-version*", new LilaString("0.1"));
-
-		// TODO: refactor
-		ENV.put("<object>", LilaObject.lilaClass);
-		ENV.put("<string>", LilaString.lilaClass);
-		ENV.put("<integer>", LilaInteger.lilaClass);
-		ENV.put("<boolean>", LilaBoolean.lilaClass);
-		ENV.put("<function>", LilaFunction.lilaClass);
-		ENV.put("<class>", LilaClass.lilaClass);
-		ENV.put("<array>", LilaArray.lilaClass);
-	}
-
-
 	//// values
 
 	static Map<String, List<MutableCallSite>> valueCallSites = new HashMap<>();
@@ -165,5 +151,9 @@ public class RT {
 			RT.ENV.put(name, gf);
 		}
 		return gf;
+	}
+
+	public static void initialize() {
+		Core.initialize();
 	}
 }

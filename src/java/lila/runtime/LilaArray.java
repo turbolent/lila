@@ -4,8 +4,9 @@ import java.util.Arrays;
 
 public class LilaArray extends LilaObject {
 
-	static LilaClass lilaClass =
-		new LilaClass(true, "<array>", LilaArray.class);
+	public static final LilaClass lilaClass =
+		new LilaClass(true, "<array>", LilaArray.class,
+		              LilaObject.lilaClass);
 
 	LilaObject[] array;
 

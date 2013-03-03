@@ -6,8 +6,8 @@ import java.util.List;
 
 public class LilaClass extends LilaObject {
 
-	static LilaClass lilaClass =
-		new LilaClass(true, "<class>", LilaClass.class);
+	// see static initialization in LilaObject
+	public static LilaClass lilaClass;
 
 	private String name;
 	private Class<?> javaClass;
@@ -26,21 +26,14 @@ public class LilaClass extends LilaObject {
 		this.builtin = builtin;
 		this.name = name;
 		this.javaClass = javaClass;
-		if (superclasses == null)
-			superclasses = new LilaClass[] { LilaObject.lilaClass };
 		this.superclasses = superclasses;
-		// workaround for mutual dependency between LilaClass and LilaObject
-		if (javaClass == LilaClass.class) {
-			// LilaObject.lilaClass still null, delay until LilaObject
-			return;
-		}
-		if (javaClass == LilaObject.class) {
-			LilaClass.lilaClass.superclasses = new LilaClass[] { this };
-			LilaClass.lilaClass.allSuperclasses =
-				Arrays.asList(new LilaClass[] { LilaClass.lilaClass, this });
-		}
 		this.allSuperclasses = C3.computeClassLinearization(this);
+		for (LilaClass superclass : this.allSuperclasses)
+			superclass.allSubclasses.add(this);
+		this.allSubclasses.add(this);
 	}
+
+	//// Instantiation
 
 	// wrapper, called from programs with lila objects
 	public static LilaObject make(LilaObject[] arguments) {
@@ -60,10 +53,13 @@ public class LilaClass extends LilaObject {
 
 	// actual implementation, called internally with java objects
 	public static LilaClass make(String name, LilaClass[] superclasses) {
-		if (superclasses != null && superclasses.length == 0)
-			superclasses = null;
+		if (superclasses == null || superclasses.length == 0)
+			superclasses = new LilaClass[] { LilaObject.lilaClass };
 		return new LilaClass(false, name, null, superclasses);
 	}
+
+
+	//// Getters
 
 	public boolean isBuiltin() {
 		return this.builtin;

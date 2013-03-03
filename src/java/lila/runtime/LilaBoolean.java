@@ -1,17 +1,18 @@
 package lila.runtime;
 
-public class LilaBoolean extends LilaObject {
+public abstract class LilaBoolean extends LilaObject {
 
-	static LilaClass lilaClass =
-		new LilaClass(true, "<boolean>", LilaBoolean.class);
+	public static final LilaClass lilaClass =
+		new LilaClass(true, "<boolean>", LilaBoolean.class,
+		              LilaObject.lilaClass);
 
 	public static LilaBoolean TRUE = new LilaBoolean(true);
 	public static LilaBoolean FALSE = new LilaBoolean(false);
 
-	private boolean value;
+	protected boolean value;
 
-	protected LilaBoolean(boolean value) {
-		super(lilaClass);
+	protected LilaBoolean(LilaClass type, boolean value) {
+		super(type);
 		this.value = value;
 	}
 

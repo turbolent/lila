@@ -2,8 +2,9 @@ package lila.runtime;
 
 public class LilaInteger extends LilaObject {
 
-	static LilaClass lilaClass =
-		new LilaClass(true, "<integer>", LilaInteger.class);
+	public static final LilaClass lilaClass =
+		new LilaClass(true, "<integer>", LilaInteger.class,
+		              LilaObject.lilaClass);
 
 	public int value;
 

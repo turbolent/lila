@@ -10,8 +10,9 @@ import java.util.Map;
 
 public class LilaGenericFunction extends LilaCallable {
 
-	static LilaClass lilaClass =
-		new LilaClass(true, "<generic-function>", LilaGenericFunction.class);
+	public static final LilaClass lilaClass =
+		new LilaClass(true, "<generic-function>", LilaGenericFunction.class,
+		              LilaObject.lilaClass);
 
 	// specializers => method handle
 	Map<List<LilaClass>, MethodHandle> methods = new HashMap<>();
