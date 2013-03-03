@@ -15,8 +15,6 @@ import lila.runtime.LilaTrue;
 class PredicateEnvironment extends HashMap<String, Expression> {}
 
 abstract class Predicate {
-	// TODO:
-	// abstract boolean evaluate();
 
 	Predicate canonicalize() {
 		return this.prepareForDNF(new PredicateEnvironment())
@@ -50,6 +48,24 @@ abstract class Predicate {
 	boolean implies(Predicate predicate) {
 		return this.equals(predicate);
 	}
+
+	// Step 7
+	public Predicate removeTrueAtoms() {
+		return this;
+	}
+
+	// Step 8
+	public Predicate removeFalseConjunctions() {
+		return this;
+	}
+
+	public boolean isAlwaysTrue() {
+		return false;
+	}
+
+	public boolean isAlwaysFalse() {
+		return false;
+	}
 }
 
 class InstanceofPredicate extends Predicate {
@@ -60,12 +76,6 @@ class InstanceofPredicate extends Predicate {
 		this.expression = expression;
 		this.type = type;
 	}
-
-	// TODO:
-	// @Override
-	// boolean evaluate() {
-	// return this.clazz.isInstance(expression.evaluate());
-	// }
 
 	@Override
 	boolean implies(Predicate predicate) {
@@ -101,6 +111,30 @@ class InstanceofPredicate extends Predicate {
 	}
 
 	@Override
+	public Predicate removeTrueAtoms() {
+		return this.isAlwaysTrue() ? null : this;
+	}
+
+	@Override
+	public boolean isAlwaysTrue() {
+		// TODO: negated class
+		return this.type.getAllSubclasses()
+			.containsAll(this.expression.staticClasses);
+	}
+
+	@Override
+	public boolean isAlwaysFalse() {
+		// TODO: negated class
+		Set<LilaClass> classes = new HashSet<>();
+		classes.addAll(this.expression.staticClasses);
+		classes.retainAll(this.type.getAllSubclasses());
+		if (classes.isEmpty())
+			return true;
+		else
+			return false;
+	}
+
+	@Override
 	public String toString() {
 		return String.format("%s@%s", this.expression, this.type);
 	}
@@ -112,12 +146,6 @@ class TestPredicate extends Predicate {
 	TestPredicate(Expression expression) {
 		this.expression = expression;
 	}
-
-	// TODO:
-	// @Override
-	// public boolean evaluate() {
-	// return expression.evaluate().isTrue();
-	// }
 
 	// TODO: not in DF, remove?
 	@Override
@@ -134,8 +162,6 @@ class TestPredicate extends Predicate {
 										LilaTrue.lilaClass);
 	}
 
-	// not in DNF -> no getAtoms
-
 	@Override
 	public String toString() {
 		return String.format("(test %s)", this.expression);
@@ -151,19 +177,11 @@ class BindingPredicate extends Predicate {
 		this.expression = expression;
 	}
 
-	// TODO:
-	// @Override
-	// public boolean evaluate() {
-	// return true;
-	// }
-
 	@Override
 	public Predicate prepareForDNF(PredicateEnvironment env) {
 		env.put(this.name, this.expression.resolve(env));
 		return null;
 	}
-
-	// not in DNF -> no getAtoms
 
 	@Override
 	public String toString() {
@@ -177,12 +195,6 @@ class NotPredicate extends Predicate {
 	NotPredicate(Predicate predicate) {
 		this.predicate = predicate;
 	}
-
-	// TODO:
-	// @Override
-	// public boolean evaluate() {
-	// return !predicate.evaluate();
-	// }
 
 	@Override
 	Predicate prepareForDNF(PredicateEnvironment env) {
@@ -214,6 +226,7 @@ class NotPredicate extends Predicate {
 		}
 	}
 
+	// TODO: not in DF, remove?
 	@Override
 	Predicate postProcessDNF() {
 		if (this.predicate instanceof InstanceofPredicate) {
@@ -224,8 +237,6 @@ class NotPredicate extends Predicate {
 		} else
 			return this;
 	}
-
-	// not in DNF -> no getAtoms
 
 	@Override
 	public String toString() {
@@ -286,6 +297,34 @@ abstract class BinaryPredicate extends Predicate {
 		atoms.addAll(this.right.getAtoms());
 		return atoms;
 	}
+
+	public Predicate update(Predicate left, Predicate right) {
+		if (left == null && right == null)
+			return null;
+		else if (left != null && right == null) {
+			return left;
+		} else if (left == null && right != null) {
+			return right;
+		} else {
+			this.left = left;
+			this.right = right;
+			return this;
+		}
+	}
+
+	@Override
+	public Predicate removeTrueAtoms() {
+		Predicate left = this.left.removeTrueAtoms();
+		Predicate right = this.right.removeTrueAtoms();
+		return update(left, right);
+	}
+
+	@Override
+	public Predicate removeFalseConjunctions() {
+		Predicate left = this.left.removeFalseConjunctions();
+		Predicate right = this.right.removeFalseConjunctions();
+		return update(left, right);
+	}
 }
 
 class AndPredicate extends BinaryPredicate {
@@ -294,7 +333,7 @@ class AndPredicate extends BinaryPredicate {
 		super(left, right);
 	}
 
-	// TODO:
+	// TODO: not used in DNF, remove?
 	// @Override
 	// public boolean evaluate() {
 	// return left.evaluate()
@@ -304,7 +343,8 @@ class AndPredicate extends BinaryPredicate {
 	@Override
 	boolean implies(Predicate predicate) {
 		// TODO: check
-		return this.left.implies(predicate) || this.right.implies(predicate);
+		return this.left.implies(predicate)
+			|| this.right.implies(predicate);
 	}
 
 	@Override
@@ -359,6 +399,20 @@ class AndPredicate extends BinaryPredicate {
 		}
 	}
 
+	@Override
+	public Predicate removeFalseConjunctions() {
+		Predicate result = super.removeFalseConjunctions();
+		if (result == null || !(result instanceof AndPredicate))
+			return result;
+		AndPredicate conjunction = (AndPredicate)result;
+		if (conjunction.left.isAlwaysFalse()
+			|| conjunction.right.isAlwaysFalse())
+		{
+			return null;
+		} else
+			return result;
+	}
+
 	// Convenience
 
 	static Predicate fromPredicates(Predicate... predicates) {
@@ -378,7 +432,7 @@ class OrPredicate extends BinaryPredicate {
 		super(left, right);
 	}
 
-	// TODO:
+	// TODO: not used in DNF, remove?
 	// @Override
 	// public boolean evaluate() {
 	// return left.evaluate()
@@ -389,18 +443,5 @@ class OrPredicate extends BinaryPredicate {
 	public String toString() {
 		return String.format("(%s or %s)", this.left, this.right);
 
-	}
-}
-
-class TruePredicate extends Predicate {
-	// TODO:
-	// @Override
-	// public boolean evaluate() {
-	// return true;
-	// }
-
-	@Override
-	public String toString() {
-		return "true";
 	}
 }

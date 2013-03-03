@@ -173,6 +173,9 @@ public class Test {
 		Expression exp1 = new Var("lst1");
 		exp1.name = "e1";
 		exp1.staticClasses = staticClasses;
+//		new HashSet<LilaClass>() {{
+//			add(cons);
+//		}};
 
 		Expression exp2 = new Var("lst2");
 		exp2.name = "e2";

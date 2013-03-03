@@ -108,10 +108,16 @@ class DispatchFunction {
 		if (conjunction instanceof AndPredicate)
 			conjunction = ((AndPredicate)conjunction).flatten();
 
-		// TODO: step 7, 8: use static class information to eliminate
-		// atomic tests that are guaranteed to be true and
-		// all conjunctions containing atomic tests that are
-		// guaranteed to be false
+		// Step 7: remove all tests guaranteed to be true
+		conjunction = conjunction.removeTrueAtoms();
+		if (conjunction == null)
+			return;
+
+		// Step 8: eliminate conjunctions containing
+		// atomic tests  that are guaranteed to be false
+		conjunction = conjunction.removeFalseConjunctions();
+		if (conjunction == null)
+			return;
 
 		// Step 9: merging of duplicate conjunctions
 		// (implicit through hash map)
@@ -122,4 +128,6 @@ class DispatchFunction {
 		}
 		methods.add(method);
 	}
+
+
 }
