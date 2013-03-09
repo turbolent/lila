@@ -126,10 +126,10 @@ module Lila
 
     # macros
 
-    rule(:identifier => simple(:name),
-         :value => simple(:value),
-         :body => simple(:body)) {
-      Macros.bind(name.to_s, value, body)
+    rule(:let_expr => {:identifier => simple(:identifier),
+                       :value => simple(:value),
+                       :body => simple(:body)}) {
+      Macros.bind(identifier.name.to_s, value, body)
     }
 
     rule(:or_expr => {:left => simple(:left),

@@ -28,21 +28,21 @@ module Lila
     }
 
     rule(:function_definition) {
-      (tDEFINE >> tFUNCTION >>
+      (kDEFINE >> kFUNCTION >>
         identifier >>
         parameter_list.as(:parameter_list) >>
         body.as(:body)).as(:function_definition)
     }
 
     rule(:method_definition) {
-      (tDEFINE >> tMETHOD >>
+      (kDEFINE >> kMETHOD >>
         identifier >>
         parameter_list.as(:parameter_list) >>
         body.as(:body)).as(:method_definition)
     }
 
     rule(:class_definition) {
-      (tDEFINE >> tCLASS >>
+      (kDEFINE >> kCLASS >>
         identifier >>
         superclasses.as(:superclasses)).as(:class_definition)
     }
@@ -55,7 +55,7 @@ module Lila
     }
 
     rule(:variable_definition) {
-      tDEFINE >> identifier >>
+      kDEFINE >> identifier >>
         tEQUALS >> expression.as(:value)
     }
 
@@ -104,15 +104,15 @@ module Lila
     }
 
     rule(:let_expression) {
-      tLET >> identifier >>
-      tEQUALS >> expression.as(:value) >>
-      body.as(:body)
+      (kLET >> identifier.as(:identifier) >>
+       tEQUALS >> expression.as(:value) >>
+       body.as(:body)).as(:let_expr)
     }
 
     rule(:if_expression) {
-      (tIF >> expression.as(:test) >>
+      (kIF >> expression.as(:test) >>
         body.as(:consequent) >>
-        (tELSE >> body.as(:alternate)).maybe)
+        (kELSE >> body.as(:alternate)).maybe)
     }
 
     rule(:bracketed_expression) {
@@ -123,7 +123,7 @@ module Lila
     }
 
     rule(:function) {
-      (tFUNCTION >>
+      (kFUNCTION >>
         parameter_list.as(:parameter_list) >>
         body.as(:body))
     }
@@ -236,7 +236,7 @@ module Lila
 
     def self.keywords(*names)
       names.each do |name|
-        rule("t#{name.to_s.upcase}") { token(name.to_s) }
+        rule("k#{name.to_s.upcase}") { token(name.to_s) }
       end
     end
 
