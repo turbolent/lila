@@ -81,9 +81,9 @@ module Lila
 
   class BooleanValue < Value
     def compile(context, builder)
-    builder.getstatic LilaBoolean,
-      (if @value then :TRUE else :FALSE end),
-      LilaBoolean
+      builder.getstatic LilaBoolean,
+        (if @value then :TRUE else :FALSE end),
+        LilaBoolean
     end
   end
 
@@ -96,12 +96,12 @@ module Lila
 
     def compile(context, builder)
       if @parameter
-        index = @parameter.function.parameter_list.index(@parameter)
+        index = @parameter.function.parameter_list.index @parameter
         builder.aload index
       else
         bootstrap = builder.h_invokestatic RT, 'bootstrapValue',
           CallSite, Lookup, Java::java.lang.String, MethodType
-        encoded_name = StringNames.toBytecodeName(@name)
+        encoded_name = StringNames.toBytecodeName @name
         builder.invokedynamic encoded_name, [LilaObject], bootstrap
       end
     end
@@ -182,9 +182,7 @@ module Lila
 
       builder.class_builder.public_static_method name, [],
         LilaObject, *param_type do |method|
-          @expressions.each { |expression|
-            expression.compile(context, method)
-          }
+          @expressions.compile(context, method)
           method.areturn
         end
 
@@ -215,9 +213,7 @@ module Lila
       unless @closed
         context = Context.new(context)
         context.function = self
-        @expressions.each { |expression|
-          expression.close context
-        }
+        @expressions.close context
         @closed = true
       end
     end

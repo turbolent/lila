@@ -31,14 +31,14 @@ module Lila
       (tDEFINE >> tFUNCTION >>
         identifier >>
         parameter_list.as(:parameter_list) >>
-        body).as(:function_definition)
+        body.as(:body)).as(:function_definition)
     }
 
     rule(:method_definition) {
       (tDEFINE >> tMETHOD >>
         identifier >>
         parameter_list.as(:parameter_list) >>
-        body).as(:method_definition)
+        body.as(:body)).as(:method_definition)
     }
 
     rule(:class_definition) {
@@ -74,12 +74,12 @@ module Lila
 
     rule(:or_expression) {
       (and_expression.as(:left) >> tOR >>
-        or_expression.as(:right)).as(:or) | and_expression
+        or_expression.as(:right)).as(:or_expr) | and_expression
     }
 
     rule(:and_expression) {
       (postfix_expression.as(:left) >> tAND >>
-        and_expression.as(:right)).as(:and) | postfix_expression
+        and_expression.as(:right)).as(:and_expr) | postfix_expression
     }
 
     rule(:postfix_expression) {
@@ -106,7 +106,7 @@ module Lila
     rule(:let_expression) {
       tLET >> identifier >>
       tEQUALS >> expression.as(:value) >>
-      body
+      body.as(:body)
     }
 
     rule(:if_expression) {
@@ -125,7 +125,7 @@ module Lila
     rule(:function) {
       (tFUNCTION >>
         parameter_list.as(:parameter_list) >>
-        body)
+        body.as(:body))
     }
 
     rule(:parameter_list) {

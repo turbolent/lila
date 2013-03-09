@@ -80,16 +80,16 @@ module Lila
     rule(:function_definition =>
          {:identifier => simple(:name),
           :parameter_list => simple(:parameter_list),
-          :body => sequence(:statements)}) {
+          :body => simple(:body)}) {
       VariableDefinition.new(name.to_s,
-        Function.new(parameter_list, statements))
+        Function.new(parameter_list, body))
     }
 
     rule(:method_definition =>
          {:identifier => simple(:name),
           :parameter_list => simple(:parameter_list),
-          :body => sequence(:statements)}) {
-      MethodDefinition.new(name.to_s, parameter_list, statements)
+          :body => simple(:body)}) {
+      MethodDefinition.new(name.to_s, parameter_list, body)
     }
 
     rule(:class_definition =>
@@ -99,8 +99,8 @@ module Lila
     }
 
     rule(:parameter_list => simple(:parameter_list),
-         :body => sequence(:statements)) {
-      Function.new(parameter_list, statements)
+         :body => simple(:body)) {
+      Function.new(parameter_list, body)
     }
 
     rule(:test => simple(:test),
@@ -128,29 +128,29 @@ module Lila
 
     rule(:identifier => simple(:name),
          :value => simple(:value),
-         :body => sequence(:expressions)) {
-      Macros.bind(name.to_s, value, expressions)
+         :body => simple(:body)) {
+      Macros.bind(name.to_s, value, body)
     }
 
-    rule(:or => {:left => simple(:left),
-                 :right => simple(:right)}) {
+    rule(:or_expr => {:left => simple(:left),
+                      :right => simple(:right)}) {
       name = Context.new_name
       value = Identifier.new(name)
-      Macros.bind(name, left,
-                  [Conditional.new(value, value, right)])
+      Macros.bind name, left,
+                  Sequence.new([Conditional.new(value, value, right)])
     }
 
-    rule(:and => {:left => simple(:left),
-                  :right => simple(:right)}) {
-      Conditional.new(left,
+    rule(:and_expr => {:left => simple(:left),
+                       :right => simple(:right)}) {
+      Conditional.new left,
                       Sequence.new([right]),
-                      Sequence.new([BooleanValue.new(false)]))
+                      Sequence.new([BooleanValue.new(false)])
     }
   end
 
   module Macros
-    def Macros.bind(name, value, expressions)
-      Call.new(Function.new(ParameterList.new([Parameter.new(name)]), expressions),
+    def Macros.bind(name, value, body)
+      Call.new(Function.new(ParameterList.new([Parameter.new(name)]), body),
                Arguments.new([value]))
     end
   end
