@@ -7,6 +7,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import lila.runtime.dispatch.Method;
+import lila.runtime.dispatch.Predicate;
+import lila.runtime.dispatch.DispatchFunction;
 
 public class LilaGenericFunction extends LilaCallable {
 
@@ -14,14 +19,23 @@ public class LilaGenericFunction extends LilaCallable {
 		new LilaClass(true, "<generic-function>", LilaGenericFunction.class,
 		              LilaObject.lilaClass);
 
-	// specializers => method handle
-	Map<List<LilaClass>, MethodHandle> methods = new HashMap<>();
+	public Map<Predicate, Method> methods = new HashMap<>();
 
-	List<LilaObject> closedArguments =
-		Collections.<LilaObject>emptyList();
+	List<LilaObject> closedArguments = Collections.emptyList();
 
 	public LilaGenericFunction() {
 		super(lilaClass);
+	}
+
+	public void addMethod(Predicate predicate, MethodHandle handle) {
+		Method method = new Method(handle);
+		// generate identifier, for debugging purposes
+		method.identifier = "m" + (methods.size() + 1);
+		methods.put(predicate, method);
+	}
+
+	public DispatchFunction toDispatchFunction() {
+		return DispatchFunction.fromMethods(this.methods);
 	}
 
 	@Override
@@ -36,14 +50,8 @@ public class LilaGenericFunction extends LilaCallable {
 
 	@Override
 	public LilaObject apply(LilaObject[] arguments) {
-		//TODO:
+		// TODO:
 		return null;
-	}
-
-	public void addMethod(MethodHandle methodHandle,
-						  List<LilaClass> specializers)
-	{
-		methods.put(specializers, methodHandle);
 	}
 
 	@Override
