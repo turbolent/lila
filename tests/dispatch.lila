@@ -1,0 +1,45 @@
+define method factorial (n)
+  when test <(n, 0)
+{
+  false
+};
+
+define method factorial (n) 
+  when test ==(n, 0) 
+{
+  0
+};
+
+define method factorial (n)
+  when test >(n, 0)
+{
+  *(n, factorial(-(n, 1)))
+};
+
+define method foo ()
+  when (b := a)
+        && (test (function (a, b) { b }))
+{
+  false
+};
+
+
+define method foo2 ()
+  when (a := 1) 
+       && (test (let a = a {"a"; a }))
+{
+  false
+};
+
+define method foo3 ()
+  when (a := n)
+       && (test (if (a) { a } else { b; a }))
+{
+  false
+};
+
+define method bar ()
+  when (x := 1) && (n :: <integer>) && ((n :: <string>) || (not test n))
+{
+  false
+};
