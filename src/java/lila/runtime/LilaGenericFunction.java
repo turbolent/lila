@@ -62,8 +62,12 @@ public class LilaGenericFunction extends LilaCallable {
 		return null;
 	}
 
-
-
-
-
+	public void dumpMethods() {
+		StringBuilder builder = new StringBuilder();
+		for (Entry<Predicate, Method> entry : this.methods.entrySet()) {
+			builder.append(String.format("\n  when %s %s", entry.getKey(),
+										 entry.getValue()));
+		}
+		System.err.println("GF" + builder);
+	}
 }
