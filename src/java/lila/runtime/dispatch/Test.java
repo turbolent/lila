@@ -1,13 +1,39 @@
 package lila.runtime.dispatch;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
+import lila.runtime.Expression;
+import lila.runtime.ExpressionEnvironment;
 import lila.runtime.LilaClass;
+import lila.runtime.LilaGenericFunction;
 import lila.runtime.LilaObject;
 import lila.runtime.RT;
+
+class Var extends Expression {
+	String name;
+
+	public Var(String identifier) {
+		this.name = identifier;
+	}
+
+	@Override
+	public LilaObject evaluate(ExpressionEnvironment env) {
+		return env.get(this.name);
+	}
+
+	@Override
+	public String toString() {
+		return this.name;
+	}
+
+	public Expression resolveBindings(PredicateEnvironment env) {
+		Expression subst = env.get(this.name);
+		if (subst == null)
+			return this;
+		else
+			return subst;
+	}
+}
 
 public class Test {
 
