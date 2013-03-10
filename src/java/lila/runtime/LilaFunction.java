@@ -78,8 +78,6 @@ public class LilaFunction extends LilaCallable {
 		return mh;
 	}
 
-
-
 	@Override
 	public LilaObject fallback
 		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)

@@ -18,7 +18,8 @@
     <mkdir dir="${build}" />
     <javac srcdir="${src}"
            destdir="${build}"
-           includeantruntime="false">
+           includeantruntime="false"
+           encoding="utf-8">
       <include name="**/*.java" />
       <classpath refid="classpath"/>
     </javac>

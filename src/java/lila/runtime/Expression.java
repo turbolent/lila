@@ -27,7 +27,7 @@ public abstract class Expression {
 			 	? Long.MAX_VALUE
 			 	: this.cost);
 	}
-	
+
 	// Debugging
 
 	public String name;
