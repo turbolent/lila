@@ -14,6 +14,18 @@ print(as-string((function (a, b) { b })(1, 2)));
 let x = 23 { "FOO"; x };
 print(let x = "bindings work" { print("ok"); x });
 
+define function printer (first) {
+  function (second) {
+    function (third) {
+      print(first);
+      print(second);
+      print(third);
+    }
+  }
+};
+
+printer("a")("b")("c");
+
 
 // closures
 

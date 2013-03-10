@@ -42,3 +42,17 @@ assert(subtype?(<baz2>, <bar>));
 
 make(<class>, "<xyz>");
 make(<class>);
+
+
+assert(subtype?(<false>, <boolean>));
+assert(subtype?(<true>, <boolean>));
+
+
+assert(instance?(false, <boolean>));
+assert(instance?(false, <false>));
+assert(not(instance?(false, <true>)));
+assert(instance?(true, <boolean>));
+assert(instance?(true, <true>));
+assert(not(instance?(true, <false>)));
+
+
