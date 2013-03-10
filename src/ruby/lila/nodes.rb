@@ -26,14 +26,47 @@ module Lila
 
   class MethodDefinition < Struct.new \
     :name, :parameter_list, :predicate, :expressions
+
+    def interpret(evaluate)
+      # create actual function
+      function = evaluate.call \
+        Function.new(self.parameter_list,
+                     self.expressions)
+      # evaluate type expressions inside predicate
+      self.predicate.resolveTypes { |expression|
+        evaluate.call expression
+      }
+      # add method to implicit generic function
+      gf = RT.findOrCreateGenericFunction self.name
+      gf.addMethod self.predicate, function.javaValue
+      gf.dumpMethods
+      df = gf.toDispatchFunction
+      puts df
+      puts gf
+    end
   end
 
-  class ClassDefinition < Struct.new :name, :superclasses; end
+  class ClassDefinition < Struct.new :name, :superclasses
+    def interpret(evaluate)
+      superclasses = self.superclasses.map { |superclass|
+        evaluate.call superclass
+      }.to_java(LilaClass)
+      lilaClass = LilaClass.make(self.name, superclasses)
+      RT.setValue self.name, lilaClass
+      puts lilaClass
+    end
+  end
 
-  class VariableDefinition < Struct.new :name, :value; end
+  class VariableDefinition < Struct.new :name, :value
+    def interpret(evaluate)
+      value = evaluate.call self.value
+      puts value
+      RT.setValue self.name, value
+    end
+  end
+
 
   class Expression < InternalExpression
-
     def is_true(builder)
       builder.invokevirtual LilaObject, 'isTrue', [Java::boolean]
     end
@@ -57,6 +90,14 @@ module Lila
     def box_boolean(builder)
       builder.invokestatic LilaBoolean, 'box', [LilaBoolean, Java::boolean]
     end
+
+    def interpret(evaluate)
+      puts evaluate.call(self)
+    end
+
+#    def toString
+#      "#[#{self.class.name}]"
+#    end
   end
 
   class Value < Expression

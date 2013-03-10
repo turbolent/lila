@@ -18,40 +18,14 @@ module Lila
       @loader = DynamicClassLoader.new
       @compiler = Compiler.new
       @context = Context.new
+      @eval = method(:eval)
     end
 
     def run_file(filename)
       source = IO.read(File.expand_path(filename))
+
       Parser.parse(source).statements.each do |statement|
-        case statement
-        when Expression
-          puts eval(statement)
-        when VariableDefinition
-          value = eval statement.value
-          puts value
-          RT.setValue statement.name, value
-        when MethodDefinition
-          function = eval Function.new(statement.parameter_list,
-                                       statement.expressions)
-          statement.predicate.resolveTypes { |expression|
-            eval expression
-          }
-          gf = RT.findOrCreateGenericFunction statement.name
-          gf.addMethod statement.predicate, function.javaValue
-          gf.dumpMethods
-          df = gf.toDispatchFunction
-          puts df
-          puts gf
-        when ClassDefinition
-          superclasses = statement.superclasses.map { |superclass|
-              eval(superclass)
-          }.to_java(LilaClass)
-          lilaClass = LilaClass.make(statement.name, superclasses)
-          RT.setValue statement.name, lilaClass
-          puts lilaClass
-        else
-          puts "Unknown statement #{statement}"
-        end
+        statement.interpret @eval
       end
     end
 
