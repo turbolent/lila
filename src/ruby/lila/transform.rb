@@ -1,5 +1,13 @@
 require 'lila/nodes'
 
+java_import 'lila.runtime.dispatch.TestPredicate'
+java_import 'lila.runtime.dispatch.NotPredicate'
+java_import 'lila.runtime.dispatch.AndPredicate'
+java_import 'lila.runtime.dispatch.OrPredicate'
+java_import 'lila.runtime.dispatch.TypePredicate'
+java_import 'lila.runtime.dispatch.BindingPredicate'
+
+
 module Lila
   class Transform < Parslet::Transform
 
@@ -88,8 +96,9 @@ module Lila
     rule(:method_definition =>
          {:identifier => simple(:name),
           :parameter_list => simple(:parameter_list),
+          :predicate => simple(:predicate),
           :body => simple(:body)}) {
-      MethodDefinition.new(name.to_s, parameter_list, body)
+      MethodDefinition.new(name.to_s, parameter_list, predicate, body)
     }
 
     rule(:class_definition =>
@@ -145,6 +154,38 @@ module Lila
       Conditional.new left,
                       Sequence.new([right]),
                       Sequence.new([BooleanValue.new(false)])
+    }
+
+    rule(:test_pred => simple(:expression)) {
+      TestPredicate.new(expression)
+    }
+
+    rule(:not_pred => simple(:predicate)) {
+      NotPredicate.new(predicate)
+    }
+
+    rule(:and_pred => {:left => simple(:left),
+                       :right => simple(:right)}) {
+      AndPredicate.new(left, right)
+    }
+
+    rule(:or_pred => {:left => simple(:left),
+                      :right => simple(:right)}) {
+      OrPredicate.new(left, right)
+    }
+
+    rule(:type_pred => {:expression => simple(:expression),
+                        :type => simple(:type)}) {
+      predicate = TypePredicate.new(expression, nil)
+      # temporarily store expresssion,
+      # evaluated to actual class by interpreter
+      predicate.typeExpression = type
+      predicate
+    }
+
+    rule(:bind_pred => {:name => simple(:name),
+                        :expression => simple(:expression)}) {
+      BindingPredicate.new(name.to_s, expression)
     }
   end
 

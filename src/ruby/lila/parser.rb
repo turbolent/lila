@@ -9,6 +9,8 @@ module Lila
       transform = Transform.new
       cst = parser.parse(source)
       ast = transform.apply(cst)
+      puts ast
+      ast
     end
 
     rule(:root) {
@@ -38,6 +40,7 @@ module Lila
       (kDEFINE >> kMETHOD >>
         identifier >>
         parameter_list.as(:parameter_list) >>
+        kWHEN >> predicate.as(:predicate) >>
         body.as(:body)).as(:method_definition)
     }
 
@@ -67,6 +70,55 @@ module Lila
        tNAME.as(:parameter) >> tWS? >>
        (tDOUBLE_COLON >> expression.as(:type) >> tWS?).maybe
     }
+
+    # Predicates
+
+    rule(:predicate) {
+      or_predicate >> tWS?
+    }
+
+    rule(:or_predicate) {
+      (and_predicate.as(:left) >> tOR >>
+        or_predicate.as(:right)).as(:or_pred) | and_predicate
+    }
+
+    rule(:and_predicate) {
+      (atom_predicate.as(:left) >> tAND >>
+        and_predicate.as(:right)).as(:and_pred) | atom_predicate
+    }
+
+    rule(:atom_predicate) {
+      (bracketed_predicate |
+       test_predicate |
+       not_predicate |
+       binding_predicate |
+       type_predicate) >> tWS?
+    }
+
+    rule(:test_predicate) {
+      (kTEST >> expression).as(:test_pred)
+    }
+
+    rule(:not_predicate) {
+      (kNOT >> predicate).as(:not_pred)
+    }
+
+    rule(:binding_predicate) {
+      (tNAME.as(:name) >> tWS? >>
+       tBIND >> expression.as(:expression)).as(:bind_pred)
+    }
+
+    rule(:type_predicate) {
+      (expression.as(:expression) >>
+        tDOUBLE_COLON >> expression.as(:type)).as(:type_pred)
+    }
+
+    rule(:bracketed_predicate) {
+      (tOPEN_PAREN >> predicate >> tCLOSE_PAREN)
+    }
+
+
+    # Expressions
 
     rule(:expression) {
       or_expression >> tWS?
@@ -230,7 +282,8 @@ module Lila
             :close_brace => '}',
             :equals => '=',
             :double_colon => '::',
-            :ellipsis => '...'
+            :ellipsis => '...',
+            :bind => ':='
 
     # keywords
 
@@ -240,6 +293,7 @@ module Lila
       end
     end
 
-    keywords :class, :function, :method, :define, :if, :else, :let
+    keywords :class, :function, :method, :define, :if, :else, :let,
+             :when, :not, :test
   end
 end

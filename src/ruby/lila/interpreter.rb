@@ -8,6 +8,7 @@ java_import 'lila.runtime.RT'
 java_import 'lila.runtime.Core'
 java_import 'lila.runtime.LilaObject'
 java_import 'lila.runtime.LilaClass'
+java_import 'lila.runtime.dispatch.Utils'
 
 
 module Lila
@@ -30,17 +31,16 @@ module Lila
           puts value
           RT.setValue statement.name, value
         when MethodDefinition
-          specializers = statement.parameters.map { |parameter|
-            if parameter.type
-              eval(parameter.type)
-            else
-              LilaObject.lilaClass
-            end
-          }
-          function = eval Function.new(statement.parameters,
+          function = eval Function.new(statement.parameter_list,
                                        statement.expressions)
+          statement.predicate.resolveTypes { |expression|
+            eval expression
+          }
           gf = RT.findOrCreateGenericFunction statement.name
-          gf.addMethod function.javaValue, specializers
+          gf.addMethod statement.predicate, function.javaValue
+          gf.dumpMethods
+          df = gf.toDispatchFunction
+          puts df
           puts gf
         when ClassDefinition
           superclasses = statement.superclasses.map { |superclass|

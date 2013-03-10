@@ -9,6 +9,11 @@ java_import 'lila.runtime.LilaFunction'
 java_import 'lila.runtime.LilaArray'
 java_import 'lila.runtime.RT'
 java_import 'lila.runtime.StringNames'
+# NOTE: monkey patching java classes has several
+# limitations, so shadow and subclass instead
+java_import 'lila.runtime.Expression' do
+  'InternalExpression'
+end
 
 java_import 'java.lang.invoke.MethodType'
 java_import 'java.lang.invoke.MethodHandle'
@@ -20,21 +25,18 @@ module Lila
   class Program < Struct.new :statements; end
 
   class MethodDefinition < Struct.new \
-    :name, :parameter_list, :expressions
+    :name, :parameter_list, :predicate, :expressions
   end
 
   class ClassDefinition < Struct.new :name, :superclasses; end
 
   class VariableDefinition < Struct.new :name, :value; end
 
-  class Expression
+  class Expression < InternalExpression
+
     def is_true(builder)
       builder.invokevirtual LilaObject, 'isTrue', [Java::boolean]
     end
-
-#    def to_s
-#      inspect
-#    end
 
     # assumes constant on stack
     def box(builder, type, boxed_type, value = @value)
@@ -59,7 +61,16 @@ module Lila
 
   class Value < Expression
     def initialize(value)
+      super()
       @value = value
+    end
+
+    def toString
+      @value.to_s
+    end
+
+    def resolveBindings(env)
+      self
     end
 
     def close(context) end
@@ -77,6 +88,10 @@ module Lila
       builder.ldc @value
       box_string builder
     end
+
+    def toString
+      @value.inspect
+    end
   end
 
   class BooleanValue < Value
@@ -91,7 +106,16 @@ module Lila
     attr_accessor :name
 
     def initialize(name)
+      super()
       @name = name
+    end
+
+    def toString
+      @name
+    end
+
+    def resolveBindings(env)
+      env[@name] || self
     end
 
     def compile(context, builder)
@@ -143,17 +167,28 @@ module Lila
     def length
       @closed_parameters.length + @parameters.length
     end
+
+    def to_s
+      "(#{@parameters.join(', ')})"
+    end
   end
 
   class Function < Expression
     attr_reader :parameter_list
 
-    def initialize(parameter_list, expressions)
+    def initialize(parameter_list, body)
+      super()
       @parameter_list = parameter_list
       parameter_list.parameters.each { |parameter|
         parameter.function = self
       }
-      @expressions = expressions
+      @body = body
+    end
+
+    def resolveBindings(env)
+      # TODO: remove parameter names from env?
+      @body = @body.resolveBindings env
+      self
     end
 
     def add_closed_parameter(parameter)
@@ -182,7 +217,7 @@ module Lila
 
       builder.class_builder.public_static_method name, [],
         LilaObject, *param_type do |method|
-          @expressions.compile(context, method)
+          @body.compile(context, method)
           method.areturn
         end
 
@@ -213,9 +248,13 @@ module Lila
       unless @closed
         context = Context.new(context)
         context.function = self
-        @expressions.close context
+        @body.close context
         @closed = true
       end
+    end
+
+    def toString
+      "function #{@parameter_list} { #{@body} }"
     end
   end
 
@@ -227,6 +266,10 @@ module Lila
     def initialize(name, type = nil)
       @name = name
       @type = type
+    end
+
+    def to_s
+      @name + (if @type then ":: #{@type}" else "" end)
     end
   end
 
@@ -243,13 +286,20 @@ module Lila
     lilaObject_array = [].to_java(LilaObject).java_class
 
     def initialize(expression, arguments)
+      super()
       @expression = expression
       @arguments = arguments
     end
 
+    def resolveBindings(env)
+      @expression = @expression.resolveBindings env
+      @arguments = @arguments.resolveBindings env
+      self
+    end
+
     def compile(context, builder)
-      @expression.compile(context, builder)
-      @arguments.compile(context, builder)
+      @expression.compile context, builder
+      @arguments.compile context, builder
       bootstrap = builder.h_invokestatic RT, 'bootstrapCall',
         CallSite, Lookup, Java::java.lang.String, MethodType
       # +2: return value, function argument
@@ -261,6 +311,10 @@ module Lila
       @expression.close context
       @arguments.close context
     end
+
+    def toString
+      "#{@expression}#{@arguments}"
+    end
   end
 
   class Arguments
@@ -270,6 +324,13 @@ module Lila
 
     def length
       @expressions.length
+    end
+
+    def resolveBindings(env)
+      @expressions = @expressions.map {|expression|
+        expression.resolveBindings env
+      }
+      self
     end
 
     def compile(context, builder)
@@ -283,13 +344,25 @@ module Lila
         expression.close context
       }
     end
+
+    def to_s
+      "(#{@expressions.join(', ')})"
+    end
   end
 
   class Conditional < Expression
     def initialize(test, consequent, alternate)
+      super()
       @test = test
       @consequent = consequent
       @alternate = alternate
+    end
+
+    def resolveBindings(env)
+      @test = @test.resolveBindings env
+      @consequent = @consequent.resolveBindings env
+      @alternate = @alternate.resolveBindings env
+      self
     end
 
     def compile(context, builder)
@@ -308,11 +381,23 @@ module Lila
         expression.close context
       }
      end
+
+     def toString
+       "if (#{@test}) { #{@consequent} } else { #{@alternate} }"
+     end
   end
 
   class Sequence < Expression
     def initialize(expressions)
+      super()
       @expressions = expressions
+    end
+
+    def resolveBindings(env)
+      @expressions = @expressions.map { |expression|
+        expression.resolveBindings env
+      }
+      self
     end
 
     def compile(context, builder)
@@ -325,6 +410,14 @@ module Lila
       @expressions.each { |expression|
         expression.close context
       }
+    end
+
+    def toString
+      if @expressions.length == 1
+        @expressions.first.to_s
+      else
+        "(#{@expressions.join(', ')})"
+      end
     end
   end
 end
