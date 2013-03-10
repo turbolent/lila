@@ -219,6 +219,20 @@ public class Core {
 	}
 
 
+	// instance?
+
+	static LilaBoolean isInstanceOf(LilaObject object, LilaClass type) {
+		return LilaBoolean.box(type.isInstance(object));
+	}
+
+	static {
+		exportFunction("instance?", "isInstanceOf",
+		               methodType(LilaBoolean.class,
+		                          LilaObject.class, LilaClass.class));
+	}
+
+
+
 	// make-array
 
 	static LilaArray makeArray(LilaArray rest) {
