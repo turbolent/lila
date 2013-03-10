@@ -5,16 +5,18 @@ import java.lang.invoke.MethodHandle;
 public class Method {
 	MethodHandle handle;
 
-	Method(MethodHandle handle) {
+	public Method(MethodHandle handle) {
 		this.handle = handle;
 	}
 
 	// Debugging
 
-	String identifier;
+	public String identifier;
 
 	@Override
 	public String toString() {
-		return String.format("{%s}", this.identifier);
+		return String.format("{%s}", (this.identifier == null
+									  ? this.handle
+									  : this.identifier));
 	}
 }

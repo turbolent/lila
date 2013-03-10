@@ -1,20 +1,12 @@
 package lila.runtime.dispatch;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import lila.runtime.LilaClass;
-import lila.runtime.LilaObject;
-import lila.runtime.LilaNegatedClass;
-import lila.runtime.LilaTrue;
+import lila.runtime.Evaluator;
 
-
-class PredicateEnvironment extends HashMap<String, Expression> {}
-
-abstract class Predicate {
+public abstract class Predicate {
 
 	Predicate canonicalize() {
 		return this.prepareForDNF(new PredicateEnvironment())
@@ -46,202 +38,36 @@ abstract class Predicate {
 	}
 
 	boolean implies(Predicate predicate) {
-		return this.equals(predicate);
+		if (this.equals(predicate))
+			return true;
+		if (predicate instanceof OrPredicate) {
+			OrPredicate orPredicate = (OrPredicate)predicate;
+			// TODO: check
+			return orPredicate.left.implies(this)
+				|| orPredicate.right.implies(this);
+		}
+		return false;
 	}
 
 	// Step 7
-	public Predicate removeTrueAtoms() {
+	Predicate removeTrueAtoms() {
 		return this;
 	}
 
 	// Step 8
-	public Predicate removeFalseConjunctions() {
+	Predicate removeFalseConjunctions() {
 		return this;
 	}
 
-	public boolean isAlwaysTrue() {
+	boolean isAlwaysTrue() {
 		return false;
 	}
 
-	public boolean isAlwaysFalse() {
-		return false;
-	}
-}
-
-class InstanceofPredicate extends Predicate {
-	Expression expression;
-	LilaClass type;
-
-	InstanceofPredicate(Expression expression, LilaClass type) {
-		this.expression = expression;
-		this.type = type;
-	}
-
-	@Override
-	boolean implies(Predicate predicate) {
-		if (predicate instanceof InstanceofPredicate) {
-			InstanceofPredicate p = (InstanceofPredicate) predicate;
-			return p.expression.equals(this.expression)
-				&& p.type.getAllSubclasses().contains(this.type);
-		}
+	boolean isAlwaysFalse() {
 		return false;
 	}
 
-	@Override
-	public Predicate prepareForDNF(PredicateEnvironment env) {
-		this.expression = this.expression.resolve(env);
-		return this;
-	}
-
-	Set<Predicate> getAtoms() {
-		Set<Predicate> atoms = new HashSet<>();
-		atoms.add(this);
-		return atoms;
-	}
-
-	Set<LilaClass> getClasses() {
-		Set<LilaClass> result = new HashSet<>();
-		if (this.type instanceof LilaNegatedClass) {
-			result.addAll(LilaObject.lilaClass.getAllSubclasses());
-			result.removeAll(this.type.getAllSubclasses());
-		} else {
-			result.addAll(this.type.getAllSubclasses());
-		}
-		return result;
-	}
-
-	@Override
-	public Predicate removeTrueAtoms() {
-		return this.isAlwaysTrue() ? null : this;
-	}
-
-	@Override
-	public boolean isAlwaysTrue() {
-		// TODO: negated class
-		return this.type.getAllSubclasses()
-			.containsAll(this.expression.staticClasses);
-	}
-
-	@Override
-	public boolean isAlwaysFalse() {
-		// TODO: negated class
-		Set<LilaClass> classes = new HashSet<>();
-		classes.addAll(this.expression.staticClasses);
-		classes.retainAll(this.type.getAllSubclasses());
-		if (classes.isEmpty())
-			return true;
-		else
-			return false;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("%s@%s", this.expression, this.type);
-	}
-}
-
-class TestPredicate extends Predicate {
-	Expression expression;
-
-	TestPredicate(Expression expression) {
-		this.expression = expression;
-	}
-
-	// TODO: not in DF, remove?
-	@Override
-	boolean implies(Predicate predicate) {
-		if (predicate instanceof TestPredicate)
-			return ((TestPredicate) predicate).expression
-				.equals(this.expression);
-		return false;
-	}
-
-	@Override
-	public Predicate prepareForDNF(PredicateEnvironment env) {
-		return new InstanceofPredicate(this.expression.resolve(env),
-										LilaTrue.lilaClass);
-	}
-
-	@Override
-	public String toString() {
-		return String.format("(test %s)", this.expression);
-	}
-}
-
-class BindingPredicate extends Predicate {
-	String name;
-	Expression expression;
-
-	BindingPredicate(String name, Expression expression) {
-		this.name = name;
-		this.expression = expression;
-	}
-
-	@Override
-	public Predicate prepareForDNF(PredicateEnvironment env) {
-		env.put(this.name, this.expression.resolve(env));
-		return null;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("(%s := %s)", this.name, this.expression);
-	}
-}
-
-class NotPredicate extends Predicate {
-	Predicate predicate;
-
-	NotPredicate(Predicate predicate) {
-		this.predicate = predicate;
-	}
-
-	@Override
-	Predicate prepareForDNF(PredicateEnvironment env) {
-		Predicate prepared = this.predicate.prepareForDNF(env);
-		if (prepared == null)
-			return null;
-		else {
-			this.predicate = prepared;
-			return this;
-		}
-	}
-
-	@Override
-	public Predicate toNNF() {
-		Predicate prepared = this.predicate.toNNF();
-		if (prepared instanceof NotPredicate) {
-			return ((NotPredicate) prepared).predicate;
-		} else if (prepared instanceof AndPredicate) {
-			AndPredicate predicate = (AndPredicate) prepared;
-			return new OrPredicate(new NotPredicate(predicate.left).toNNF(),
-									new NotPredicate(predicate.right).toNNF());
-		} else if (prepared instanceof OrPredicate) {
-			OrPredicate predicate = (OrPredicate) prepared;
-			return new AndPredicate(new NotPredicate(predicate.left).toNNF(),
-									new NotPredicate(predicate.right).toNNF());
-		} else {
-			this.predicate = prepared;
-			return this;
-		}
-	}
-
-	// TODO: not in DF, remove?
-	@Override
-	Predicate postProcessDNF() {
-		if (this.predicate instanceof InstanceofPredicate) {
-			InstanceofPredicate predicate =
-				(InstanceofPredicate) this.predicate;
-			return new InstanceofPredicate(predicate.expression,
-											predicate.type.negate());
-		} else
-			return this;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("(not %s)", this.predicate);
-	}
+	void resolveTypes(Evaluator evaluator) {};
 }
 
 abstract class BinaryPredicate extends Predicate {
@@ -298,7 +124,7 @@ abstract class BinaryPredicate extends Predicate {
 		return atoms;
 	}
 
-	public Predicate update(Predicate left, Predicate right) {
+	Predicate update(Predicate left, Predicate right) {
 		if (left == null && right == null)
 			return null;
 		else if (left != null && right == null) {
@@ -313,135 +139,22 @@ abstract class BinaryPredicate extends Predicate {
 	}
 
 	@Override
-	public Predicate removeTrueAtoms() {
+	Predicate removeTrueAtoms() {
 		Predicate left = this.left.removeTrueAtoms();
 		Predicate right = this.right.removeTrueAtoms();
 		return update(left, right);
 	}
 
 	@Override
-	public Predicate removeFalseConjunctions() {
+	Predicate removeFalseConjunctions() {
 		Predicate left = this.left.removeFalseConjunctions();
 		Predicate right = this.right.removeFalseConjunctions();
 		return update(left, right);
 	}
-}
-
-class AndPredicate extends BinaryPredicate {
-
-	AndPredicate(Predicate left, Predicate right) {
-		super(left, right);
-	}
-
-	// TODO: not used in DNF, remove?
-	// @Override
-	// public boolean evaluate() {
-	// return left.evaluate()
-	// && right.evaluate();
-	// }
 
 	@Override
-	boolean implies(Predicate predicate) {
-		// TODO: check
-		return this.left.implies(predicate)
-			|| this.right.implies(predicate);
-	}
-
-	@Override
-	public String toString() {
-		return String.format("(%s and %s)", this.left, this.right);
-	}
-
-	@Override
-	BinaryPredicate toDNF() {
-		BinaryPredicate processed = super.toDNF();
-		boolean leftIsOr = processed.left instanceof OrPredicate;
-		boolean rightIsOr = processed.right instanceof OrPredicate;
-		// NOTE: no reordering to keep evaluation order
-		// (p ∨ q) ∧ r → (p ∧ r) ∨ (q ∧ r)
-		if (leftIsOr && !rightIsOr) {
-			BinaryPredicate left = (BinaryPredicate) processed.left;
-			return new OrPredicate(new AndPredicate(left.left, processed.right),
-			                       new AndPredicate(left.right, processed.right));
-		}
-		// p ∧ (q ∨ r) → (p ∧ q) ∨ (p ∧ r)
-		else if (!leftIsOr && rightIsOr) {
-			BinaryPredicate right = (BinaryPredicate) processed.right;
-			return new OrPredicate(new AndPredicate(processed.left, right.left),
-			                       new AndPredicate(processed.left, right.right));
-		}
-		// (p ∨ q) ∧ (r ∨ s) → ((p ∧ r) ∨ (p ∧ s)) ∨ ((q ∧ r) ∨ (q ∧ s))
-		else if (leftIsOr && rightIsOr) {
-			BinaryPredicate left = (BinaryPredicate) processed.left;
-			BinaryPredicate right = (BinaryPredicate) processed.right;
-			return new OrPredicate(new OrPredicate(new AndPredicate(left.left,
-			                                                        right.left),
-			                                       new AndPredicate(left.left,
-			                                                        right.right)),
-                                   new OrPredicate(new AndPredicate(left.right,
-                                                                    right.left),
-                                                   new AndPredicate(left.right,
-																	right.right)));
-		} else
-			return processed;
-	}
-
-	AndPredicate flatten() {
-		if (this.left instanceof AndPredicate) {
-			AndPredicate predicate = (AndPredicate) this.left;
-			this.left = predicate.left;
-			this.right = new AndPredicate(predicate.right, this.right);
-			return this.flatten();
-		} else {
-			if (this.right instanceof AndPredicate)
-				this.right = ((AndPredicate) this.right).flatten();
-			return this;
-		}
-	}
-
-	@Override
-	public Predicate removeFalseConjunctions() {
-		Predicate result = super.removeFalseConjunctions();
-		if (result == null || !(result instanceof AndPredicate))
-			return result;
-		AndPredicate conjunction = (AndPredicate)result;
-		if (conjunction.left.isAlwaysFalse()
-			|| conjunction.right.isAlwaysFalse())
-		{
-			return null;
-		} else
-			return result;
-	}
-
-	// Convenience
-
-	static Predicate fromPredicates(Predicate... predicates) {
-		int l = predicates.length;
-		Predicate result = predicates[l - 1];
-		for (int i = l - 2; i >= 0; i--) {
-			Predicate other = predicates[i];
-			result = new AndPredicate(other, result);
-		}
-		return result;
-	}
-}
-
-class OrPredicate extends BinaryPredicate {
-
-	OrPredicate(Predicate left, Predicate right) {
-		super(left, right);
-	}
-
-	// TODO: not used in DNF, remove?
-	// @Override
-	// public boolean evaluate() {
-	// return left.evaluate()
-	// || right.evaluate();
-	// }
-
-	@Override
-	public String toString() {
-		return String.format("(%s or %s)", this.left, this.right);
-
+	void resolveTypes(Evaluator evaluator) {
+		this.left.resolveTypes(evaluator);
+		this.right.resolveTypes(evaluator);
 	}
 }

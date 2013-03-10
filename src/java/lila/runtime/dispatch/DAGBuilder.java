@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import lila.runtime.Expression;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaObject;
 
@@ -205,7 +206,7 @@ class DAGBuilder {
 		Set<LilaClass> result = null;
 		if (c.getExpressions().contains(expression)) {
 			for (Predicate predicate : c.getAtoms()) {
-				InstanceofPredicate atom = (InstanceofPredicate)predicate;
+				TypePredicate atom = (TypePredicate)predicate;
 				if (atom.expression.equals(expression)) {
 					Set<LilaClass> classes = atom.getClasses();
 					// intersection

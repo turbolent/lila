@@ -12,13 +12,15 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import lila.runtime.Expression;
+import lila.runtime.ExpressionEnvironment;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaObject;
 
 
 abstract class Node {
-	abstract Method evaluate(ExpressionEnvironment env);
 
+	abstract Method evaluate(ExpressionEnvironment env);
 
 	// Debugging
 

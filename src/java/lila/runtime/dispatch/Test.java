@@ -99,29 +99,29 @@ public class Test {
 //		GenericFunction gf = new GenericFunction();
 //
 //		Predicate pred1 =
-//			AndPredicate.fromPredicates(new InstanceofPredicate(exp1, clazzA),
+//			AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
 //			                            new BindingPredicate("t", exp2),
-//			                            new InstanceofPredicate(new Var("t"), clazzA),
-//			                            new NotPredicate(new InstanceofPredicate(new Var("t"), clazzB)),
-//			                            new InstanceofPredicate(exp3, clazzC),
+//			                            new TypePredicate(new Var("t"), clazzA),
+//			                            new NotPredicate(new TypePredicate(new Var("t"), clazzB)),
+//			                            new TypePredicate(exp3, clazzC),
 //			                            new TestPredicate(exp4));
 //		gf.methods.put(pred1, new Method(1));
 //
 //		Predicate pred2 =
-//			new AndPredicate(new InstanceofPredicate(exp2, clazzB),
-//			                 new OrPredicate(new AndPredicate(new InstanceofPredicate(exp1, clazzB),
-//			                                                  new InstanceofPredicate(exp3, clazzC)),
-//			                                 new AndPredicate(new InstanceofPredicate(exp1, clazzC),
-//			                                                  new InstanceofPredicate(exp5, clazzA))));
+//			new AndPredicate(new TypePredicate(exp2, clazzB),
+//			                 new OrPredicate(new AndPredicate(new TypePredicate(exp1, clazzB),
+//			                                                  new TypePredicate(exp3, clazzC)),
+//			                                 new AndPredicate(new TypePredicate(exp1, clazzC),
+//			                                                  new TypePredicate(exp5, clazzA))));
 //		gf.methods.put(pred2, new Method(2));
 //
 //		Predicate pred3 =
-//			new AndPredicate(new InstanceofPredicate(exp1, clazzC),
-//			                 new InstanceofPredicate(exp5, clazzC));
+//			new AndPredicate(new TypePredicate(exp1, clazzC),
+//			                 new TypePredicate(exp5, clazzC));
 //		gf.methods.put(pred3, new Method(3));
 //
 //		Predicate pred4 =
-//			new InstanceofPredicate(exp1, clazzC);
+//			new TypePredicate(exp1, clazzC);
 //		gf.methods.put(pred4, new Method(4));
 //
 //		System.out.println(gf);
@@ -138,32 +138,32 @@ public class Test {
 //		DispatchFunction df2 = new DispatchFunction(exp1, exp5);
 //
 //		// (f1@A and f1.x@A and f1.x@!B and (f1.y=f2.y)@true) => m1
-//		Predicate p1 = AndPredicate.fromPredicates(new InstanceofPredicate(exp1, clazzA),
-//		                                           new InstanceofPredicate(exp2, clazzA),
-//		                                           new InstanceofPredicate(exp2, new NegatedClazz(clazzB)),
-//		                                           new InstanceofPredicate(exp4, TrueClazz.CLAZZ));
+//		Predicate p1 = AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
+//		                                           new TypePredicate(exp2, clazzA),
+//		                                           new TypePredicate(exp2, new NegatedClazz(clazzB)),
+//		                                           new TypePredicate(exp4, TrueClazz.CLAZZ));
 //		df2.cases.put(p1, new HashSet<Method>() {{ add(new Method(1)); }});
 //
 //		final Method m2 = new Method(2);
 //
 //		// (f1.x@B and f1@B) => m2
-//		Predicate p2 = AndPredicate.fromPredicates(new InstanceofPredicate(exp2, clazzB),
-//		                                           new InstanceofPredicate(exp1, clazzB));
+//		Predicate p2 = AndPredicate.fromPredicates(new TypePredicate(exp2, clazzB),
+//		                                           new TypePredicate(exp1, clazzB));
 //		df2.cases.put(p2, new HashSet<Method>() {{ add(m2); }});
 //
 //		// (f1.x@B and f1@C and f2@A) => m2
-//		Predicate p3 = AndPredicate.fromPredicates(new InstanceofPredicate(exp2, clazzB),
-//		                                           new InstanceofPredicate(exp1, clazzC),
-//		                                           new InstanceofPredicate(exp5, clazzA));
+//		Predicate p3 = AndPredicate.fromPredicates(new TypePredicate(exp2, clazzB),
+//		                                           new TypePredicate(exp1, clazzC),
+//		                                           new TypePredicate(exp5, clazzA));
 //		df2.cases.put(p3, new HashSet<Method>() {{ add(m2); }});
 //
 //		// (f1@C and f2@C) => m3
-//		Predicate p4 = AndPredicate.fromPredicates(new InstanceofPredicate(exp1, clazzC),
-//		                                           new InstanceofPredicate(exp5, clazzC));
+//		Predicate p4 = AndPredicate.fromPredicates(new TypePredicate(exp1, clazzC),
+//		                                           new TypePredicate(exp5, clazzC));
 //		df2.cases.put(p4, new HashSet<Method>() {{ add(new Method(3)); }});
 //
 //		// (f1@C) => m4
-//		Predicate p5 = new InstanceofPredicate(exp1, clazzC);
+//		Predicate p5 = new TypePredicate(exp1, clazzC);
 //		df2.cases.put(p5, new HashSet<Method>() {{ add(new Method(4)); }});
 //
 //		System.out.println(df2);
@@ -198,14 +198,13 @@ public class Test {
 
 		Expression exp1 = new Var("lst1");
 		exp1.name = "e1";
-		exp1.staticClasses = staticClasses;
-//		new HashSet<LilaClass>() {{
+//		exp1.staticClasses = new HashSet<LilaClass>() {{
 //			add(cons);
 //		}};
 
 		Expression exp2 = new Var("lst2");
 		exp2.name = "e2";
-		exp2.staticClasses = staticClasses;
+		//exp2.staticClasses = staticClasses;
 
 		final Method m1 = new Method(null);
 		m1.identifier = "Cons";
@@ -213,19 +212,19 @@ public class Test {
 		m2.identifier = "Nil";
 
 		Predicate pred1 =
-			new AndPredicate(new InstanceofPredicate(exp1, cons),
-			                 new InstanceofPredicate(exp2, cons));
+			new AndPredicate(new TypePredicate(exp1, cons),
+			                 new TypePredicate(exp2, cons));
 		Predicate pred2 =
-			new AndPredicate(new InstanceofPredicate(exp1, nil),
-			                 new InstanceofPredicate(exp2, nil));
+			new AndPredicate(new TypePredicate(exp1, nil),
+			                 new TypePredicate(exp2, nil));
 
 
-		Map<Predicate, Method> methods = new HashMap<>();
-		methods.put(pred1, m1);
-		methods.put(pred2, m2);
+		LilaGenericFunction gf = new LilaGenericFunction();
+		gf.methods.put(pred1, m1);
+		gf.methods.put(pred2, m2);
+		gf.dumpMethods();
 
-		Utils.dumpMethods(methods);
-		DispatchFunction df = DispatchFunction.fromMethods(methods);
+		DispatchFunction df = DispatchFunction.fromMethods(gf.methods);
 		System.out.println(df);
 
 		DAGBuilder builder = new DAGBuilder();

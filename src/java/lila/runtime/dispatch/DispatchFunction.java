@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import lila.runtime.Expression;
+
 
 
 class Case {
@@ -26,7 +28,7 @@ class Case {
 	LinkedHashSet<Expression> getExpressions() {
 		LinkedHashSet<Expression> result = new LinkedHashSet<>();
 		for (Predicate atom : this.conjunction.getAtoms())
-			result.add(((InstanceofPredicate)atom).expression);
+			result.add(((TypePredicate)atom).expression);
 		return result;
 	}
 
@@ -45,7 +47,7 @@ class Case {
 	static int ids = 1;
 }
 
-class DispatchFunction {
+public class DispatchFunction {
 
 	List<Expression> inputExpressions;
 
@@ -74,7 +76,7 @@ class DispatchFunction {
 
 	//// Transformation: GF => DF
 
-	static DispatchFunction fromMethods(Map<Predicate, Method> methods)  {
+	public static DispatchFunction fromMethods(Map<Predicate, Method> methods)  {
 		DispatchFunction result = new DispatchFunction();
 		// build map
 		HashMap<Predicate, Set<Method>> caseMap = new LinkedHashMap<>();
