@@ -1,12 +1,15 @@
 package lila.runtime.dispatch;
 
 import java.util.Set;
+import java.util.HashSet;
 
 import lila.runtime.Expression;
 import lila.runtime.ExpressionEnvironment;
 import lila.runtime.LilaClass;
+import lila.runtime.LilaFalse;
 import lila.runtime.LilaGenericFunction;
 import lila.runtime.LilaObject;
+import lila.runtime.LilaTrue;
 import lila.runtime.RT;
 
 class Var extends Expression {
@@ -35,102 +38,134 @@ class Var extends Expression {
 	}
 }
 
+class BinaryExpression extends Expression {
+	String operation;
+	Expression left;
+	Expression right;
+
+	BinaryExpression(String operation, Expression left, Expression right) {
+		this.operation = operation;
+		this.left = left;
+		this.right = right;
+	}
+
+	@Override
+	public LilaObject evaluate(ExpressionEnvironment env) {
+		// TODO
+		return null;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(	"(%s %s %s)", this.left, this.operation,
+								this.right);
+	}
+
+	@Override
+	public Expression resolveBindings(PredicateEnvironment env) {
+		this.left = this.left.resolveBindings(env);
+		this.right = this.right.resolveBindings(env);
+		return this;
+	}
+}
+
 public class Test {
 
 	public static void main(String[] args) throws Exception {
 
 		RT.initialize();
 
-		// test1();
+		test1();
 		// System.out.println();
-		test2();
+		// test2();
 
 	}
 
-//	static void test1() throws Exception {
-//		final Clazz clazzA = new Clazz("A");
-//		final Clazz clazzB = new Clazz("B", clazzA);
-//		final Clazz clazzC = new Clazz("C");
-//		final Clazz clazzD = new Clazz("D", clazzA, clazzC);
-//
-//		Expression exp1 = new Var("f1");
-//		exp1.name = "e1";
-//		exp1.staticClasses = new HashSet<Clazz>() {{
-//			add(clazzA);
-//			add(clazzB);
-//			add(clazzC);
-//		}};
-//
-//		Expression exp2 = new Var("f1.x");
-//		exp2.name = "e3";
-//		exp2.staticClasses = new HashSet<Clazz>() {{
-//			add(clazzA);
-//			add(clazzB);
-//			add(clazzC);
-//			add(clazzD);
-//		}};
-//
-//		Expression exp3 = new Var("f2.x");
-//		exp3.name = "e5";
-//		exp3.staticClasses = new HashSet<Clazz>() {{
-//			add(clazzC);
-//			add(clazzD);
-//		}};
-//
-//		Expression exp4 = new BinaryExpression("=", new Var("f1.y"), new Var("f2.y"));
-//		exp4.name = "e4";
-//		exp4.staticClasses = new HashSet<Clazz>() {{
-//			add(TrueClazz.CLAZZ);
-//			add(FalseClazz.CLAZZ);
-//		}};
-//
-//		Expression exp5 = new Var("f2");
-//		exp5.name = "e2";
-//		exp5.staticClasses = new HashSet<Clazz>() {{
-//			add(clazzA);
-//			add(clazzB);
-//			add(clazzC);
-//			add(clazzD);
-//		}};
-//
-//
-//		// Test GF => DF
-//
-//		GenericFunction gf = new GenericFunction();
-//
-//		Predicate pred1 =
-//			AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
-//			                            new BindingPredicate("t", exp2),
-//			                            new TypePredicate(new Var("t"), clazzA),
-//			                            new NotPredicate(new TypePredicate(new Var("t"), clazzB)),
-//			                            new TypePredicate(exp3, clazzC),
-//			                            new TestPredicate(exp4));
-//		gf.methods.put(pred1, new Method(1));
-//
-//		Predicate pred2 =
-//			new AndPredicate(new TypePredicate(exp2, clazzB),
-//			                 new OrPredicate(new AndPredicate(new TypePredicate(exp1, clazzB),
-//			                                                  new TypePredicate(exp3, clazzC)),
-//			                                 new AndPredicate(new TypePredicate(exp1, clazzC),
-//			                                                  new TypePredicate(exp5, clazzA))));
-//		gf.methods.put(pred2, new Method(2));
-//
-//		Predicate pred3 =
-//			new AndPredicate(new TypePredicate(exp1, clazzC),
-//			                 new TypePredicate(exp5, clazzC));
-//		gf.methods.put(pred3, new Method(3));
-//
-//		Predicate pred4 =
-//			new TypePredicate(exp1, clazzC);
-//		gf.methods.put(pred4, new Method(4));
-//
-//		System.out.println(gf);
-//
-//		DispatchFunction df1 = DispatchFunction.convert(gf);
-//
-//		System.out.println(df1);
-//
-//
+	static void test1() throws Exception {
+		final LilaClass clazzA = new LilaClass(false, "A", null);
+		final LilaClass clazzB = new LilaClass(false, "B", null, clazzA);
+		final LilaClass clazzC = new LilaClass(false, "C", null);
+		final LilaClass clazzD = new LilaClass(false, "D", null, clazzA, clazzC);
+
+		Expression exp1 = new Var("f1");
+		exp1.name = "e1";
+		exp1.staticClasses = new HashSet<LilaClass>() {{
+			add(clazzA);
+			add(clazzB);
+			add(clazzC);
+		}};
+
+		Expression exp2 = new Var("f1.x");
+		exp2.name = "e3";
+		exp2.staticClasses = new HashSet<LilaClass>() {{
+			add(clazzA);
+			add(clazzB);
+			add(clazzC);
+			add(clazzD);
+		}};
+
+		Expression exp3 = new Var("f2.x");
+		exp3.name = "e5";
+		exp3.staticClasses = new HashSet<LilaClass>() {{
+			add(clazzC);
+			add(clazzD);
+		}};
+
+		Expression exp4 = new BinaryExpression("=", new Var("f1.y"), new Var("f2.y"));
+		exp4.name = "e4";
+		exp4.staticClasses = new HashSet<LilaClass>() {{
+			add(LilaTrue.lilaClass);
+			add(LilaFalse.lilaClass);
+		}};
+
+		Expression exp5 = new Var("f2");
+		exp5.name = "e2";
+		exp5.staticClasses = new HashSet<LilaClass>() {{
+			add(clazzA);
+			add(clazzB);
+			add(clazzC);
+			add(clazzD);
+		}};
+
+		LilaGenericFunction gf = new LilaGenericFunction();
+
+		Predicate pred1 =
+			AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
+			                            new BindingPredicate("t", exp2),
+			                            new TypePredicate(new Var("t"), clazzA),
+			                            new NotPredicate(new TypePredicate(new Var("t"), clazzB)),
+			                            new TypePredicate(exp3, clazzC),
+			                            new TestPredicate(exp4));
+		Method m1 = new Method(null);
+		m1.identifier = "m1";
+		gf.addMethod(pred1, m1);
+
+		Predicate pred2 =
+			new AndPredicate(new TypePredicate(exp2, clazzB),
+			                 new OrPredicate(new AndPredicate(new TypePredicate(exp1, clazzB),
+			                                                  new TypePredicate(exp3, clazzC)),
+			                                 new AndPredicate(new TypePredicate(exp1, clazzC),
+			                                                  new TypePredicate(exp5, clazzA))));
+		Method m2 = new Method(null);
+		m2.identifier = "m2";
+		gf.addMethod(pred2, m2);
+
+		Predicate pred3 =
+			new AndPredicate(new TypePredicate(exp1, clazzC),
+			                 new TypePredicate(exp5, clazzC));
+		Method m3 = new Method(null);
+		m3.identifier = "m3";
+		gf.addMethod(pred3, m3);
+
+		Predicate pred4 =
+			new TypePredicate(exp1, clazzC);
+		Method m4 = new Method(null);
+		m4.identifier = "m4";
+		gf.addMethod(pred4, m4);
+
+		gf.dumpMethods();
+
+
 //		// Test DF => DAG
 //		// (DF manually constructed, as example has
 //		//  eliminated exp3 / e5, not performed by convert)
@@ -167,12 +202,12 @@ public class Test {
 //		df2.cases.put(p5, new HashSet<Method>() {{ add(new Method(4)); }});
 //
 //		System.out.println(df2);
-//
-//		DAGBuilder builder = new DAGBuilder();
-//		Node node = builder.buildLookupDAG(df2);
-//		System.out.println(node);
-//		builder.dump(node);
-//	}
+
+		DAGBuilder builder = new DAGBuilder();
+		Node node = builder.buildLookupDAG(gf);
+		System.out.println(node);
+		builder.dump(node);
+	}
 
 	static void test2() throws Exception {
 
@@ -218,17 +253,13 @@ public class Test {
 			new AndPredicate(new TypePredicate(exp1, nil),
 			                 new TypePredicate(exp2, nil));
 
-
 		LilaGenericFunction gf = new LilaGenericFunction();
-		gf.methods.put(pred1, m1);
-		gf.methods.put(pred2, m2);
+		gf.addMethod(pred1, m1);
+		gf.addMethod(pred2, m2);
 		gf.dumpMethods();
 
-		DispatchFunction df = DispatchFunction.fromMethods(gf.methods);
-		System.out.println(df);
-
 		DAGBuilder builder = new DAGBuilder();
-		Node node = builder.buildLookupDAG(df);
+		Node node = builder.buildLookupDAG(gf);
 		builder.dump(node);
 
 		ExpressionEnvironment env = new ExpressionEnvironment();
