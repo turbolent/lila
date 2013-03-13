@@ -7,7 +7,7 @@ java_import 'java.lang.invoke.MethodHandles'
 java_import 'java.lang.invoke.MethodType'
 
 module Lila
-  class CompiledExpression <
+  class CompilationResult <
     Struct.new :name, :code, :functions
   end
 
@@ -55,7 +55,7 @@ module Lila
     def new_class_builder(opts = {})
       # generate new class name
       @class_id += 1
-      name = '__lila' + @class_id.to_s
+      name = "__lila#{@class_id}"
       # common superclass is always LilaObject
       opts[:widen] = Proc.new { |a, b|
         BiteScript::Signature::path(LilaObject)
@@ -65,20 +65,26 @@ module Lila
 
     # compile an expression into a class
     def compile_expression(expression, context)
+      compile expression, context, "run", [LilaObject] do |builder|
+        builder.areturn
+      end
+    end
+
+    def compile(expression, context, name, sig)
       # initialize set of functions and
       # create new class builder
       context.functions = {}
       builder = new_class_builder
 
       # create entry point into expression
-      builder.public_static_method "run", [], LilaObject do |method|
+      builder.public_static_method name, [], *sig do |method|
         expression.compile(context, method)
-        method.areturn
+        yield method if block_given?
       end
 
       # return name and bytecode of class,
       # as well as function names created during compilation
-      CompiledExpression.new builder.class_name,
+      CompilationResult.new builder.class_name,
         bytecode(builder),
         context.functions
     end

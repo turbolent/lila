@@ -14,37 +14,32 @@ java_import 'lila.runtime.dispatch.Utils'
 module Lila
   class Interpreter
 
+    attr_reader :loader, :compiler, :context
+
     def initialize
       @loader = DynamicClassLoader.new
       @compiler = Compiler.new
       @context = Context.new
-      @eval = method(:eval)
     end
 
     def run_file(filename)
       source = IO.read(File.expand_path(filename))
 
       Parser.parse(source).statements.each do |statement|
-        statement.interpret @eval
+        statement.interpret self
       end
     end
 
-    def dump(expression)
-      File.open('/tmp/' + expression.name + '.class', 'w') do |file|
-        file.write(expression.code)
+    def dump(result)
+      File.open('/tmp/' + result.name + '.class', 'w') do |file|
+        file.write(result.code)
       end
     end
 
-    def eval(statement)
-      # compile the expression into a class
-      expression = @compiler.compile_expression(statement, @context)
-
-      dump expression
-
-      clazz = @loader.define(expression.name, expression.code)
-
+    def load(result)
+      clazz = @loader.define(result.name, result.code)
       # register internal functions created during compilation
-      expression.functions.each { |name, type_rest|
+      result.functions.each { |name, type_rest|
         type, rest = type_rest
         # convert types to java classes
         type = type.map { |c| c.java_class }
@@ -53,8 +48,15 @@ module Lila
         # finally, call into runtime
         RT.registerInternalFunction clazz, name, rest, rtype, ptypes
       }
+      clazz
+    end
 
-      @loader.run(clazz, 'run')
+    def eval(expression)
+      # compile the expression into a class
+      result = @compiler.compile_expression expression, @context
+      dump result
+      clazz = load result
+      @loader.run clazz
     end
   end
 end

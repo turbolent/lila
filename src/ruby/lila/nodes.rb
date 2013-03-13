@@ -14,6 +14,9 @@ java_import 'lila.runtime.StringNames'
 java_import 'lila.runtime.Expression' do
   'InternalExpression'
 end
+java_import 'lila.runtime.LilaGenericFunction'
+java_import 'lila.runtime.dispatch.DispatchFunction'
+
 
 java_import 'java.lang.invoke.MethodType'
 java_import 'java.lang.invoke.MethodHandle'
@@ -24,42 +27,86 @@ module Lila
 
   class Program < Struct.new :statements; end
 
+  # subclassed to hold additional data used
+  # during compilation of predicate expressions
+  class GenericFunction < LilaGenericFunction
+    attr_reader :expression_method
+
+    def initialize
+      super()
+      @expression_method = {}
+    end
+
+    def getExpressionMethod(expression)
+      @expression_method[expression]
+    end
+
+    # TODO: copy function
+  end
+
   class MethodDefinition < Struct.new \
     :name, :parameter_list, :predicate, :expressions
 
-    def interpret(evaluate)
+    def interpret(interpreter)
       # create actual function
-      function = evaluate.call \
+      function = interpreter.eval \
         Function.new(self.parameter_list,
                      self.expressions)
       # evaluate type expressions inside predicate
       self.predicate.resolveTypes { |expression|
-        evaluate.call expression
+        interpreter.eval expression
       }
       # add method to implicit generic function
-      gf = RT.findOrCreateGenericFunction self.name
+      gf = RT.getValue self.name
+      unless gf.instance_of? GenericFunction
+        gf = GenericFunction.new
+        RT.setValue self.name, gf
+      end
       gf.addMethod self.predicate, function.javaValue
       gf.dumpMethods
-      df = gf.toDispatchFunction
+      # create dispatch function
+      df = DispatchFunction.fromMethods gf.methods
+
+      # compile each expression inside DF conjunctions once
+      sig = [Java::boolean] + [LilaObject] * self.parameter_list.length
+      df.compileExpressions { |expression|
+        unless gf.expression_method[expression]
+          puts "Compiling predicate expression: #{expression}"
+          name = "__exp#{gf.expression_method.length + 1}"
+          result = interpreter.compiler.compile expression, interpreter.context,
+            name, sig do |builder|
+              expression.is_true builder
+              builder.ireturn
+            end
+
+          interpreter.dump result
+          clazz = interpreter.load result
+          handle = interpreter.loader.findMethod clazz, name, *sig
+          gf.expression_method[expression] = handle
+        end
+      }
+
+      puts gf.expression_method
+
       puts df
-      puts gf
+      gf
     end
   end
 
   class ClassDefinition < Struct.new :name, :superclasses
-    def interpret(evaluate)
+    def interpret(interpreter)
       superclasses = self.superclasses.map { |superclass|
-        evaluate.call superclass
+        interpreter.eval superclass
       }.to_java(LilaClass)
       lilaClass = LilaClass.make(self.name, superclasses)
       RT.setValue self.name, lilaClass
-      puts lilaClass
+      lilaClass
     end
   end
 
   class VariableDefinition < Struct.new :name, :value
-    def interpret(evaluate)
-      value = evaluate.call self.value
+    def interpret(interpreter)
+      value = interpreter.eval self.value
       puts value
       RT.setValue self.name, value
     end
@@ -91,8 +138,8 @@ module Lila
       builder.invokestatic LilaBoolean, 'box', [LilaBoolean, Java::boolean]
     end
 
-    def interpret(evaluate)
-      puts evaluate.call(self)
+    def interpret(interpreter)
+      puts interpreter.eval(self)
     end
 
 #    def toString
@@ -101,10 +148,23 @@ module Lila
   end
 
   class Value < Expression
+    attr_reader :value
+
     def initialize(value)
       super()
       @value = value
     end
+
+    def hash
+      @value.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @value == other.value
+    end
+
+    alias eql? ==
 
     def toString
       @value.to_s
@@ -150,6 +210,17 @@ module Lila
       super()
       @name = name
     end
+
+    def hash
+      @name.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @name == other.name
+    end
+
+    alias eql? ==
 
     def toString
       @name
@@ -199,6 +270,20 @@ module Lila
       @closed_parameters = []
     end
 
+    # TODO: only structural equivalence, so
+    #       @parameters enough for hash and eql? ?
+
+    def hash
+      @parameters.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @parameters == other.parameters
+    end
+
+    alias eql? ==
+
     def index(parameter)
        @closed_parameters.index(parameter) ||
          (@closed_parameters.length +
@@ -210,12 +295,13 @@ module Lila
     end
 
     def to_s
+      # TODO: show closed parameters?
       "(#{@parameters.join(', ')})"
     end
   end
 
   class Function < Expression
-    attr_reader :parameter_list
+    attr_reader :parameter_list, :body
 
     def initialize(parameter_list, body)
       super()
@@ -225,6 +311,18 @@ module Lila
       }
       @body = body
     end
+
+    def hash
+      @parameter_list.hash ^ @body.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @parameter_list == other.parameter_list and
+        @body == other.body
+    end
+
+    alias eql? ==
 
     def resolveBindings(env)
       # TODO: remove parameter names from env?
@@ -301,13 +399,24 @@ module Lila
 
   class Parameter
     attr_accessor :function
-    attr_reader :name
-    attr_reader :type
+    attr_reader :name, :type
 
     def initialize(name, type = nil)
       @name = name
       @type = type
     end
+
+    def hash
+      @name.hash ^ @type.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @name == other.name and
+        @type == other.type
+    end
+
+    alias eql? ==
 
     def to_s
       @name + (if @type then ":: #{@type}" else "" end)
@@ -325,12 +434,25 @@ module Lila
 
   class Call < Expression
     lilaObject_array = [].to_java(LilaObject).java_class
+    attr_reader :expression, :arguments
 
     def initialize(expression, arguments)
       super()
       @expression = expression
       @arguments = arguments
     end
+
+    def hash
+      @expression.hash ^ @arguments.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @expression == other.expression and
+        @arguments == other.arguments
+    end
+
+    alias eql? ==
 
     def resolveBindings(env)
       @expression = @expression.resolveBindings env
@@ -359,9 +481,22 @@ module Lila
   end
 
   class Arguments
+    attr_reader :expressions
+
     def initialize(expressions)
       @expressions = expressions
     end
+
+    def hash
+      @expressions.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @expressions == other.expressions
+    end
+
+    alias eql? ==
 
     def length
       @expressions.length
@@ -392,12 +527,29 @@ module Lila
   end
 
   class Conditional < Expression
+    attr_reader :test, :consequent, :alternate
+
     def initialize(test, consequent, alternate)
       super()
       @test = test
       @consequent = consequent
       @alternate = alternate
     end
+
+    def hash
+      @test.hash ^
+        @consequent.hash ^
+        @alternate.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @test == other.test and
+        @consequent == other.consequent and
+        @alternate == other.alternate
+    end
+
+    alias eql? ==
 
     def resolveBindings(env)
       @test = @test.resolveBindings env
@@ -429,10 +581,23 @@ module Lila
   end
 
   class Sequence < Expression
+    attr_reader :expressions
+
     def initialize(expressions)
       super()
       @expressions = expressions
     end
+
+    def hash
+      @expressions.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @expressions == other.expressions
+    end
+
+    alias eql? ==
 
     def resolveBindings(env)
       @expressions = @expressions.map { |expression|

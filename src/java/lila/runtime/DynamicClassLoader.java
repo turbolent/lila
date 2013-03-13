@@ -9,9 +9,16 @@ public class DynamicClassLoader extends ClassLoader {
 		return super.defineClass(name, classBytes, 0, classBytes.length);
 	}
 
-	public LilaObject run(Class<?> clazz, String name) throws Throwable {
-		MethodHandle run = MethodHandles.lookup()
-			.findStatic(clazz, name, methodType(LilaObject.class));
+	public MethodHandle findMethod
+		(Class<?> clazz, String name, Class<?> rtype, Class<?>...ptypes)
+		throws Throwable
+	{
+		return MethodHandles.lookup()
+			.findStatic(clazz, name, methodType(rtype, ptypes));
+	}
+
+	public LilaObject run(Class<?> clazz) throws Throwable {
+		MethodHandle run = findMethod(clazz, "run", LilaObject.class);
 		return (LilaObject)run.invokeExact();
 	}
 }

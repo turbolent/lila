@@ -59,6 +59,10 @@ public class RT {
 		return callSite;
 	}
 
+	public static LilaObject getValue(String name) {
+		return ENV.get(name);
+	}
+
 	public static void setValue(String name, LilaObject value) {
 		// update value
 		ENV.put(name, value);
@@ -138,19 +142,6 @@ public class RT {
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }
-	}
-
-
-	//// generic functions
-
-	public static LilaGenericFunction findOrCreateGenericFunction(String name) {
-		LilaGenericFunction gf = (LilaGenericFunction)RT.ENV.get(name);
-		if (gf == null) {
-			gf = new LilaGenericFunction();
-			// TODO: setValue required?
-			RT.ENV.put(name, gf);
-		}
-		return gf;
 	}
 
 	public static void initialize() {
