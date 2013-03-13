@@ -5,8 +5,6 @@ import java.util.Set;
 import lila.runtime.dispatch.PredicateEnvironment;
 
 public abstract class Expression {
-	// TODO: replace with compilation
-	public abstract LilaObject evaluate(ExpressionEnvironment env);
 
 	public abstract Expression resolveBindings(PredicateEnvironment env);
 
@@ -28,7 +26,9 @@ public abstract class Expression {
 			 	: this.cost);
 	}
 
-	// Debugging
+	// Debugging / Testing
+
+	public abstract LilaObject evaluate(ExpressionEnvironment env);
 
 	public String name;
 }

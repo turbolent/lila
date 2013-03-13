@@ -1,17 +1,57 @@
 package lila.runtime.dispatch;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import lila.runtime.Evaluator;
+import lila.runtime.Compiler;
+
 
 public abstract class Predicate {
 
-	Predicate canonicalize() {
-		return this.prepareForDNF(new PredicateEnvironment())
+	public Set<Predicate> canonicalize() {
+		Predicate predicate = this.prepareForDNF(new PredicateEnvironment())
 			.toNNF().toDNF().postProcessDNF();
+
+		HashSet<Predicate> conjunctions = new LinkedHashSet<>();
+		Predicate.addDisjunction(conjunctions, predicate);
+		return conjunctions;
 	}
+
+	private static void addDisjunction(Set<Predicate> conjunctions, Predicate disjunction) {
+		// Step 5: split disjunctions, add method for each conjunction
+		if (disjunction instanceof OrPredicate) {
+			OrPredicate predicate = (OrPredicate)disjunction;
+			addDisjunction(conjunctions, predicate.left);
+			addDisjunction(conjunctions, predicate.right);
+		} else
+			addConjunction(conjunctions, disjunction);
+	}
+
+	private static void addConjunction(Set<Predicate> conjunctions, Predicate conjunction) {
+		if (conjunction instanceof AndPredicate)
+			conjunction = ((AndPredicate)conjunction).flatten();
+
+		// Step 7: remove all tests guaranteed to be true
+		conjunction = conjunction.removeTrueAtoms();
+		if (conjunction == null)
+			return;
+
+		// Step 8: eliminate conjunctions containing
+		// atomic tests  that are guaranteed to be false
+		conjunction = conjunction.removeFalseConjunctions();
+		if (conjunction == null)
+			return;
+
+		// Step 9: merging of duplicate conjunctions
+		// (implicit through hash set)
+		conjunctions.add(conjunction);
+	}
+
 
 	// Step 1-2: resolve variables, remove empty predicates
 	Predicate prepareForDNF(PredicateEnvironment env) {
@@ -33,7 +73,7 @@ public abstract class Predicate {
 		return this;
 	}
 
-	Set<Predicate> getAtoms() {
+	public Set<Predicate> getAtoms() {
 		return Collections.emptySet();
 	}
 
@@ -50,12 +90,12 @@ public abstract class Predicate {
 	}
 
 	// Step 7
-	Predicate removeTrueAtoms() {
+	public Predicate removeTrueAtoms() {
 		return this;
 	}
 
 	// Step 8
-	Predicate removeFalseConjunctions() {
+	public Predicate removeFalseConjunctions() {
 		return this;
 	}
 
@@ -68,11 +108,13 @@ public abstract class Predicate {
 	}
 
 	void resolveTypes(Evaluator evaluator) {};
+
+	public void compileExpressions(Compiler compiler) {};
 }
 
 abstract class BinaryPredicate extends Predicate {
-	Predicate left;
-	Predicate right;
+	public Predicate left;
+	public Predicate right;
 
 	BinaryPredicate(Predicate left, Predicate right) {
 		this.left = left;
@@ -117,7 +159,7 @@ abstract class BinaryPredicate extends Predicate {
 	}
 
 	@Override
-	Set<Predicate> getAtoms() {
+	public Set<Predicate> getAtoms() {
 		Set<Predicate> atoms = new LinkedHashSet<>();
 		atoms.addAll(this.left.getAtoms());
 		atoms.addAll(this.right.getAtoms());
@@ -139,14 +181,14 @@ abstract class BinaryPredicate extends Predicate {
 	}
 
 	@Override
-	Predicate removeTrueAtoms() {
+	public Predicate removeTrueAtoms() {
 		Predicate left = this.left.removeTrueAtoms();
 		Predicate right = this.right.removeTrueAtoms();
 		return update(left, right);
 	}
 
 	@Override
-	Predicate removeFalseConjunctions() {
+	public Predicate removeFalseConjunctions() {
 		Predicate left = this.left.removeFalseConjunctions();
 		Predicate right = this.right.removeFalseConjunctions();
 		return update(left, right);
@@ -156,5 +198,11 @@ abstract class BinaryPredicate extends Predicate {
 	void resolveTypes(Evaluator evaluator) {
 		this.left.resolveTypes(evaluator);
 		this.right.resolveTypes(evaluator);
+	}
+
+	@Override
+	public void compileExpressions(Compiler compiler) {
+		this.left.compileExpressions(compiler);
+		this.right.compileExpressions(compiler);
 	}
 }

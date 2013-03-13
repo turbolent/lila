@@ -1,6 +1,7 @@
 package lila.runtime.dispatch;
 
 import lila.runtime.Evaluator;
+import lila.runtime.Compiler;
 
 public class NotPredicate extends Predicate {
 	Predicate predicate;
@@ -46,7 +47,7 @@ public class NotPredicate extends Predicate {
 			TypePredicate predicate =
 				(TypePredicate) this.predicate;
 			return new TypePredicate(predicate.expression,
-											predicate.type.negate());
+			                         predicate.type.negate());
 		} else
 			return this;
 	}
@@ -54,6 +55,11 @@ public class NotPredicate extends Predicate {
 	@Override
 	void resolveTypes(Evaluator evaluator) {
 		this.predicate.resolveTypes(evaluator);
+	}
+
+	@Override
+	public void compileExpressions(Compiler compiler) {
+		this.predicate.compileExpressions(compiler);
 	}
 
 	@Override

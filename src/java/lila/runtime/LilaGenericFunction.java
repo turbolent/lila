@@ -7,11 +7,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import lila.runtime.dispatch.Case;
 import lila.runtime.dispatch.Method;
 import lila.runtime.dispatch.Predicate;
-import lila.runtime.dispatch.DispatchFunction;
 
 public class LilaGenericFunction extends LilaCallable {
 
@@ -19,32 +18,63 @@ public class LilaGenericFunction extends LilaCallable {
 		new LilaClass(true, "<generic-function>", LilaGenericFunction.class,
 		              LilaObject.lilaClass);
 
-	public Map<Predicate, Method> methods = new HashMap<>();
 
+	public Map<Predicate,Case> cases = new HashMap<>();
 	List<LilaObject> closedArguments = Collections.emptyList();
+
 
 	public LilaGenericFunction() {
 		super(lilaClass);
 	}
 
-	public void addMethod(Predicate predicate, MethodHandle handle) {
-		Method method = new Method(handle);
-		// generate identifier, for debugging purposes
-		method.identifier = "m" + (methods.size() + 1);
-		methods.put(predicate, method);
+
+// TODO:
+	public List<Expression> inputExpressions = Collections.emptyList();
+
+//	public DispatchFunction(Expression... inputExpressions) {
+//		// TODO: remove, debugging
+//		int cost = 0;
+//		for (Expression inputExpression : inputExpressions)
+//			inputExpression.cost = cost++;
+//
+//		this.inputExpressions = Arrays.asList(inputExpressions);
+//	}
+
+ 	public void addMethodHandle(Predicate predicate, MethodHandle handle) {
+		addMethod(predicate, new Method(handle));
+ 	}
+
+ 	public void addMethod(Predicate predicate, Method method) {
+		for (Predicate conjunction : predicate.canonicalize()) {
+			Case c = this.cases.get(conjunction);
+			if (c == null) {
+				c = new Case(conjunction);
+				this.cases.put(conjunction, c);
+			}
+			c.methods.add(method);
+		}
 	}
 
-	public DispatchFunction toDispatchFunction() {
-		return DispatchFunction.fromMethods(this.methods);
-	}
+	void compileExpressions(Compiler compiler) {
+		for (Case c : this.cases.values()) {
+			c.conjunction.compileExpressions(compiler);
+		}
+	};
+
+	// TODO: rename;
+	//       override in GenericFunction subclass
+	//       defined inside interpreter
+	LilaGenericFunction copy() {
+		return new LilaGenericFunction();
+	};
 
 	@Override
 	public LilaGenericFunction close(LilaObject value) {
-		LilaGenericFunction gf = new LilaGenericFunction();
+		LilaGenericFunction gf = copy();
 		gf.closedArguments = new ArrayList<LilaObject>();
 		gf.closedArguments.addAll(this.closedArguments);
 		gf.closedArguments.add(value);
-		gf.methods = this.methods;
+		// TODO: copy cases
 		return gf;
 	}
 
@@ -70,11 +100,18 @@ public class LilaGenericFunction extends LilaCallable {
 		return null;
 	}
 
+	// NOTE: implemented in interpreter
+	MethodHandle getExpressionMethod(Expression expression) {
+		return null;
+	}
+
 	public void dumpMethods() {
 		StringBuilder builder = new StringBuilder();
-		for (Entry<Predicate, Method> entry : this.methods.entrySet()) {
-			builder.append(String.format("\n  when %s %s", entry.getKey(),
-										 entry.getValue()));
+		String sep = "  ";
+		for (Case c : this.cases.values()) {
+			builder.append(String.format("\n  %s %s => %s", sep,
+			                             c.conjunction, c.methods));
+			sep = "or";
 		}
 		System.err.println("GF" + builder);
 	}

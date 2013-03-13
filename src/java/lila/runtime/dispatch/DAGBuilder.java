@@ -3,6 +3,7 @@ package lila.runtime.dispatch;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.Map.Entry;
 
 import lila.runtime.Expression;
 import lila.runtime.LilaClass;
+import lila.runtime.LilaGenericFunction;
 import lila.runtime.LilaObject;
 
 
@@ -108,7 +110,7 @@ class DAGBuilder {
 		return constraints(inputExpressions, result);
 	}
 
-	static Set<Expression> allExpressions(Set<Case> cases) {
+	static Set<Expression> allExpressions(Collection<Case> cases) {
 		Set<Expression> result = new LinkedHashSet<>();
 		for (Case c : cases)
 			result.addAll(c.getExpressions());
@@ -117,9 +119,11 @@ class DAGBuilder {
 
 	Map<Pair<Set<Case>,Set<Expression>>,Node> memo = new HashMap<>();
 
-	Node buildLookupDAG(DispatchFunction df) {
-		this.constraints = constraints(df.cases, df.inputExpressions);
-		return buildSubDAG(df.cases, allExpressions(df.cases));
+	Node buildLookupDAG(LilaGenericFunction gf) {
+		Set<Case> cases = new HashSet<>();
+		cases.addAll(gf.cases.values());
+		this.constraints = constraints(cases, gf.inputExpressions);
+		return buildSubDAG(cases, allExpressions(cases));
 	}
 
 	Node buildSubDAG(Set<Case> cases, Set<Expression> expressions) {

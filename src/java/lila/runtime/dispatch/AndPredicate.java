@@ -54,7 +54,7 @@ public class AndPredicate extends BinaryPredicate {
 			return processed;
 	}
 
-	AndPredicate flatten() {
+	public AndPredicate flatten() {
 		if (this.left instanceof AndPredicate) {
 			AndPredicate predicate = (AndPredicate) this.left;
 			this.left = predicate.left;

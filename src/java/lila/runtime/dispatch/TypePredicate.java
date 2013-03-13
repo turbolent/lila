@@ -8,9 +8,12 @@ import lila.runtime.Expression;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaNegatedClass;
 import lila.runtime.LilaObject;
+import lila.runtime.Compiler;
 
 public class TypePredicate extends Predicate {
-	Expression expression;
+
+	public Expression expression;
+
 	// temporarily holds type expression at
 	// parse time until evaluated by interpreter
 	public Expression typeExpression;
@@ -39,7 +42,7 @@ public class TypePredicate extends Predicate {
 		return this;
 	}
 
-	Set<Predicate> getAtoms() {
+	public Set<Predicate> getAtoms() {
 		Set<Predicate> atoms = new HashSet<>();
 		atoms.add(this);
 		return atoms;
@@ -57,7 +60,7 @@ public class TypePredicate extends Predicate {
 	}
 
 	@Override
-	Predicate removeTrueAtoms() {
+	public Predicate removeTrueAtoms() {
 		return this.isAlwaysTrue() ? null : this;
 	}
 
@@ -100,6 +103,10 @@ public class TypePredicate extends Predicate {
 			                           + " = " + result);
 	}
 
+	@Override
+	public void compileExpressions(Compiler compiler) {
+		compiler.compile(this.expression);
+	}
 
 	@Override
 	public String toString() {
