@@ -11,13 +11,12 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import lila.runtime.Expression;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaGenericFunction;
-import lila.runtime.LilaObject;
 
 
 
@@ -28,11 +27,19 @@ import lila.runtime.LilaObject;
 class DAGBuilder {
 
 	// TODO:
-	static Method notUnderstood = new Method(null);
+	static Method inapplicable = new Method(null);
 	static Method ambiguous = new Method(null);
 	static {
-		notUnderstood.identifier = "NOT_UNDERSTOOD";
+		inapplicable.identifier = "INAPPLICABLE";
 		ambiguous.identifier = "AMBIGUOUS";
+	}
+
+	Set<LilaClass> allClasses;
+	private Method inapplicableMethod = inapplicable;
+	private Method ambiguousMethod = ambiguous;
+
+	public DAGBuilder(Set<LilaClass> allClasses) {
+		this.allClasses = allClasses;
 	}
 
 	// TODO: check actual dependencies based on static information,
@@ -119,6 +126,9 @@ class DAGBuilder {
 
 	Map<Pair<Set<Case>,Set<Expression>>,Node> memo = new HashMap<>();
 
+	Map<Method,LeafNode> leafNodes = new HashMap<>();
+
+
 	Node buildLookupDAG(LilaGenericFunction gf) {
 		Set<Case> cases = new HashSet<>();
 		cases.addAll(gf.cases.values());
@@ -133,9 +143,14 @@ class DAGBuilder {
 			return node;
 
 		if (expressions.isEmpty()) {
-			LeafNode leafNode = new LeafNode();
+			Method targetMethod = computeTarget(cases);
+			LeafNode leafNode = leafNodes.get(targetMethod);
+			if (leafNode == null) {
+				leafNode = new LeafNode();
+				leafNode.method = targetMethod;
+				leafNodes.put(targetMethod, leafNode);
+			}
 			node = leafNode;
-			leafNode.method = computeTarget(cases);
 		} else {
 			InteriorNode interiorNode = new InteriorNode();
 			node = interiorNode;
@@ -146,6 +161,9 @@ class DAGBuilder {
 				Set<Expression> targetExpressions =
 					targetExpressions(expressions, targetCases, expression);
 				Node targetNode = buildSubDAG(targetCases, targetExpressions);
+
+
+				interiorNode.edges.put(clazz, targetNode);
 				interiorNode.edges.put(clazz, targetNode);
 			}
 		}
@@ -170,10 +188,14 @@ class DAGBuilder {
 			// check if the case's conjunction implies
 			// or is implied by an existing conjunction
 			boolean isImplied = false;
-			for (Entry<Predicate,Set<Method>> entry : methods.entrySet()) {
-				Predicate conjunction = entry.getKey();
-				if (c.conjunction.implies(conjunction))
+
+			Set<Predicate> conjunctions = new HashSet<>();
+			conjunctions.addAll(methods.keySet());
+
+			for (Predicate conjunction : conjunctions) {
+				if (c.conjunction.implies(conjunction)) {
 					methods.remove(conjunction);
+				}
 				if (conjunction.implies(c.conjunction)) {
 					isImplied = true;
 					break;
@@ -188,11 +210,11 @@ class DAGBuilder {
 			allMethods.addAll(entry.getValue());
 		switch (allMethods.size()) {
 		case 0:
-			return notUnderstood;
+			return this.inapplicableMethod;
 		case 1:
 			return allMethods.iterator().next();
 		default:
-			return ambiguous;
+			return this.ambiguousMethod;
 		}
 	}
 
@@ -224,7 +246,7 @@ class DAGBuilder {
 			}
 		} else {
 			// all classes
-			result = LilaObject.lilaClass.getAllSubclasses();
+			result = this.allClasses;
 		}
 		return result;
 
