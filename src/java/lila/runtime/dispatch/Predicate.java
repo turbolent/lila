@@ -39,7 +39,7 @@ public abstract class Predicate {
 		// Step 7: remove all tests guaranteed to be true
 		conjunction = conjunction.removeTrueAtoms();
 		if (conjunction == null)
-			return;
+			conjunction = TruePredicate.INSTANCE;
 
 		// Step 8: eliminate conjunctions containing
 		// atomic tests  that are guaranteed to be false
@@ -78,8 +78,11 @@ public abstract class Predicate {
 	}
 
 	boolean implies(Predicate predicate) {
-		if (this.equals(predicate))
+		if (this.equals(predicate)
+			|| predicate instanceof TruePredicate)
+		{
 			return true;
+		}
 		if (predicate instanceof OrPredicate) {
 			OrPredicate orPredicate = (OrPredicate)predicate;
 			// TODO: check
