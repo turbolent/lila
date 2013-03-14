@@ -42,6 +42,20 @@ public class LilaFunction extends LilaCallable {
 			return null;
 		}
 	}
+	
+	static final Lookup lookup = MethodHandles.lookup();
+
+	static LilaFunction wrap
+		(Class<?> clazz, String name, MethodType type)
+	{
+		try {
+			MethodHandle mh = lookup.findStatic(clazz, name, type);
+			return new LilaFunction(mh);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	@Override
 	public String toString() {
@@ -114,7 +128,6 @@ public class LilaFunction extends LilaCallable {
 		return (LilaObject)mh.invokeWithArguments((Object[])args);
 	}
 
-	static final Lookup lookup = MethodHandles.lookup();
 	private static final MethodHandle checkMH;
 	private static MethodHandle boxAsArray;
 	static {

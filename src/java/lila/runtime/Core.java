@@ -12,22 +12,10 @@ public class Core {
 
 	static final Lookup lookup = MethodHandles.lookup();
 
-	static LilaFunction makeLilaFunction
-		(Class<?> clazz, String name, MethodType type)
-	{
-		try {
-			MethodHandle mh = lookup.findStatic(clazz, name, type);
-			return new LilaFunction(mh);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
 	static LilaFunction exportFunction
 		(String exportedName, String name, MethodType type)
 	{
-		LilaFunction function = makeLilaFunction(Core.class, name, type);
+		LilaFunction function = LilaFunction.wrap(Core.class, name, type);
 		RT.ENV.put(exportedName, function);
 		return function;
 	}
