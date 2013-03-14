@@ -15,7 +15,6 @@ java_import 'lila.runtime.Expression' do
   'InternalExpression'
 end
 java_import 'lila.runtime.LilaGenericFunction'
-java_import 'lila.runtime.dispatch.DispatchFunction'
 
 
 java_import 'java.lang.invoke.MethodType'
@@ -62,14 +61,13 @@ module Lila
         gf = GenericFunction.new
         RT.setValue self.name, gf
       end
-      gf.addMethod self.predicate, function.javaValue
+      gf.addMethodHandle self.predicate, function.javaValue
       gf.dumpMethods
       # create dispatch function
-      df = DispatchFunction.fromMethods gf.methods
 
       # compile each expression inside DF conjunctions once
       sig = [Java::boolean] + [LilaObject] * self.parameter_list.length
-      df.compileExpressions { |expression|
+      gf.compileExpressions { |expression|
         unless gf.expression_method[expression]
           puts "Compiling predicate expression: #{expression}"
           name = "__exp#{gf.expression_method.length + 1}"
@@ -88,7 +86,6 @@ module Lila
 
       puts gf.expression_method
 
-      puts df
       gf
     end
   end
