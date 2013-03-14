@@ -1,5 +1,6 @@
 package lila.runtime.dispatch;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -57,8 +58,8 @@ class BinaryExpression extends Expression {
 
 	@Override
 	public String toString() {
-		return String.format(	"(%s %s %s)", this.left, this.operation,
-								this.right);
+		return String.format("(%s %s %s)",
+		                     this.left, this.operation, this.right);
 	}
 
 	@Override
@@ -78,6 +79,8 @@ public class Test {
 		test1();
 		// System.out.println();
 		// test2();
+
+		// test3();
 
 	}
 
@@ -203,7 +206,9 @@ public class Test {
 //
 //		System.out.println(df2);
 
-		DAGBuilder builder = new DAGBuilder();
+
+		Set<LilaClass> classes = LilaObject.lilaClass.getAllSubclasses();
+		DAGBuilder builder = new DAGBuilder(classes);
 		Node node = builder.buildLookupDAG(gf);
 		System.out.println(node);
 		builder.dump(node);
@@ -241,24 +246,28 @@ public class Test {
 		exp2.name = "e2";
 		//exp2.staticClasses = staticClasses;
 
+		LilaGenericFunction gf = new LilaGenericFunction();
+
+		// method 1
 		final Method m1 = new Method(null);
 		m1.identifier = "Cons";
-		final Method m2 = new Method(null);
-		m2.identifier = "Nil";
-
 		Predicate pred1 =
 			new AndPredicate(new TypePredicate(exp1, cons),
 			                 new TypePredicate(exp2, cons));
+		gf.addMethod(pred1, m1);
+
+		// method 2
+		final Method m2 = new Method(null);
+		m2.identifier = "Nil";
 		Predicate pred2 =
 			new AndPredicate(new TypePredicate(exp1, nil),
 			                 new TypePredicate(exp2, nil));
-
-		LilaGenericFunction gf = new LilaGenericFunction();
-		gf.addMethod(pred1, m1);
 		gf.addMethod(pred2, m2);
+
 		gf.dumpMethods();
 
-		DAGBuilder builder = new DAGBuilder();
+		Set<LilaClass> classes = LilaObject.lilaClass.getAllSubclasses();
+		DAGBuilder builder = new DAGBuilder(classes);
 		Node node = builder.buildLookupDAG(gf);
 		builder.dump(node);
 
@@ -268,4 +277,61 @@ public class Test {
 
 		System.out.println(node.evaluate(env));
 	}
+
+	static void test3() throws Exception {
+		// isomorphic
+
+		final LilaClass treeNode = new LilaClass(false, "TreeNode", null);
+		final LilaClass dataNode = new LilaClass(false, "DataNode", null, treeNode);
+		final LilaClass emptyNode = new LilaClass(false, "EmptyNode", null, treeNode);
+
+		Set<LilaClass> classes = new HashSet<LilaClass>() {{
+			add(treeNode);
+			add(dataNode);
+			add(emptyNode);
+		}};
+
+		final Expression exp1 = new Var("t1");
+		exp1.name = "e1";
+		exp1.staticClasses = classes;
+
+		final Expression exp2 = new Var("t2");
+		exp2.name = "e2";
+		exp2.staticClasses = classes;
+
+
+		final Method m1 = new Method(null);
+		m1.identifier = "true";
+
+		final Method m2 = new Method(null);
+		m2.identifier = "false";
+
+		final Method m3 = new Method(null);
+		m3.identifier = "other";
+
+		Predicate pred1 =
+			new AndPredicate(new TypePredicate(exp1, emptyNode),
+			                 new TypePredicate(exp2, emptyNode));
+
+		Predicate pred2 =
+			new OrPredicate(new TypePredicate(exp1, emptyNode),
+			                new TypePredicate(exp2, emptyNode));
+
+		LilaGenericFunction gf = new LilaGenericFunction();
+
+//		gf.inputExpressions = new ArrayList<Expression>() {{
+//			add(exp1);
+//			add(exp2);
+//		}};
+
+		gf.addMethod(pred1, m1);
+		gf.addMethod(pred2, m2);
+		gf.addMethod(TruePredicate.INSTANCE, m3);
+		gf.dumpMethods();
+
+		DAGBuilder builder = new DAGBuilder(classes);
+		Node node = builder.buildLookupDAG(gf);
+		builder.dump(node);
+	}
+
 }

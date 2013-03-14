@@ -77,7 +77,7 @@ class InteriorNode extends Node {
 		if (target == null) {
 			String message =
 				String.format("Node evaluation exception: unable "
-					+ "to find edge for result %s", v);
+							  + "to find edge for result %s", v);
 			throw new RuntimeException(message);
 		}
 		return target.evaluate(env);

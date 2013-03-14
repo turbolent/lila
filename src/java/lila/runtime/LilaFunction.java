@@ -42,7 +42,7 @@ public class LilaFunction extends LilaCallable {
 			return null;
 		}
 	}
-	
+
 	static final Lookup lookup = MethodHandles.lookup();
 
 	static LilaFunction wrap
