@@ -1,7 +1,6 @@
 package lila.runtime;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MutableCallSite;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,7 +91,7 @@ public class LilaGenericFunction extends LilaCallable {
 
 	@Override
 	LilaObject fallback
-		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
+		(LilaCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable
 	{
 		// TODO:

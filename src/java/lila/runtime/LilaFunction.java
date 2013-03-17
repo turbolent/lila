@@ -6,7 +6,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.MutableCallSite;
 
 public class LilaFunction extends LilaCallable {
 
@@ -68,10 +67,8 @@ public class LilaFunction extends LilaCallable {
 
 	// call
 
-	public static boolean checkMH(MethodHandle target, LilaObject fn) {
-		// TODO: cast may fail, right?
-		MethodHandle mh = ((LilaFunction)fn).methodHandle;
-		return mh == target;
+	public static boolean check(LilaFunction function, LilaObject fn) {
+		return fn == function;
 	}
 
 	private MethodHandle methodHandleForArguments
@@ -88,19 +85,21 @@ public class LilaFunction extends LilaCallable {
 			int pos = requiredParameterCount;
 			mh = MethodHandles.filterArguments(mh, pos, boxAsArray);
 			// create adapter collecting additional arguments
-			int count = (argumentCount
-						 - requiredParameterCount);
+			int count = (argumentCount - requiredParameterCount);
 			mh = mh.asCollector(LilaObject[].class, count);
 		}
 		return mh;
 	}
 
+	static final int maxCainCount = 2;
+
 	@Override
 	public LilaObject fallback
-		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
+		(LilaCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable
 	{
 		LilaFunction function = (LilaFunction)callable;
+
 		MethodType callSiteType = callSite.type();
 		int argumentCount = callSiteType.parameterCount() - 1;
 
@@ -111,18 +110,22 @@ public class LilaFunction extends LilaCallable {
 			.dropArguments(mh, 0, LilaObject.class)
 			.asType(callSiteType);
 
-		MethodHandle mhTest = checkMH.bindTo(target);
+		MethodHandle mhTest = check.bindTo(function);
 
 		MethodType mhTestType = mhTest.type()
 			.changeParameterType(0, callSiteType.parameterType(0));
 		mhTest = mhTest.asType(mhTestType);
 
-		// ATM not a cache, always changing target in this fallback
-		// if method handle changes
-		MethodHandle fallback = RT.fallback.bindTo(callSite)
-			// -1: function
-			.asCollector(LilaObject[].class,
-			             argumentCount);
+		MethodHandle fallback;
+		if (callSite.chainCount > maxCainCount) {
+			fallback = RT.fallback.bindTo(callSite)
+				// -1: function
+				.asCollector(LilaObject[].class, argumentCount);
+			callSite.chainCount = 0;
+		} else {
+			fallback = callSite.getTarget();
+			callSite.chainCount += 1;
+		}
 
 		MethodHandle guard =
 			MethodHandles.guardWithTest(mhTest, target, fallback);
@@ -131,14 +134,14 @@ public class LilaFunction extends LilaCallable {
 		return (LilaObject)mh.invokeWithArguments((Object[])args);
 	}
 
-	private static final MethodHandle checkMH;
+	private static final MethodHandle check;
 	private static MethodHandle boxAsArray;
 	static {
 		try {
-			checkMH = lookup
-				.findStatic(LilaFunction.class, "checkMH",
+			check = lookup
+				.findStatic(LilaFunction.class, "check",
 				            methodType(boolean.class,
-				                       MethodHandle.class, LilaObject.class));
+				                       LilaFunction.class, LilaObject.class));
 			boxAsArray = lookup
 				.findConstructor(LilaArray.class,
 				                 methodType(void.class,

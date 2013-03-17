@@ -1,7 +1,5 @@
 package lila.runtime;
 
-import java.lang.invoke.MutableCallSite;
-
 abstract class LilaCallable extends LilaObject {
 
 	protected String name;
@@ -16,7 +14,7 @@ abstract class LilaCallable extends LilaObject {
 	abstract LilaObject apply(LilaObject[] arguments);
 
 	abstract LilaObject fallback
-		(MutableCallSite callSite, LilaCallable callable, LilaObject[] args)
+		(LilaCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable;
 
 	boolean hasRest = false;

@@ -111,7 +111,7 @@ public class RT {
 	public static CallSite bootstrapCall
 		(Lookup lookup, String name, MethodType type)
 	{
-		CallSite callSite = new MutableCallSite(type);
+		CallSite callSite = new LilaCallSite(type);
 		MethodHandle target = fallback.bindTo(callSite)
 			// -1: function
 			.asCollector(LilaObject[].class, type.parameterCount() - 1);
@@ -121,7 +121,7 @@ public class RT {
 
 	// generic fallback handler for all calls
 	public static LilaObject fallback
-	    (MutableCallSite callSite, LilaObject object, LilaObject[] args)
+	    (LilaCallSite callSite, LilaObject object, LilaObject[] args)
 		throws Throwable
     {
 		if (object instanceof LilaCallable) {
@@ -136,8 +136,7 @@ public class RT {
 		try {
 			MethodType fallbackType =
 				methodType(LilaObject.class,
-				                      MutableCallSite.class, LilaObject.class,
-				                      LilaObject[].class);
+	                       LilaCallSite.class, LilaObject.class, LilaObject[].class);
 			fallback = lookup.findStatic(RT.class, "fallback", fallbackType);
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
