@@ -38,9 +38,9 @@ module Lila
   class GenericFunction < LilaGenericFunction
     attr_reader :expression_method
 
-    def initialize
-      super()
-      @expression_method = {}
+    def initialize(name)
+      super name
+      @expression_info = {}
     end
 
     def getExpressionMethod(expression)
@@ -93,7 +93,7 @@ module Lila
 
       puts gf.expression_method
 
-      gf
+      puts gf
     end
   end
 

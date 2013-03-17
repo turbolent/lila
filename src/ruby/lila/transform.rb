@@ -12,19 +12,19 @@ module Lila
   class Transform < Parslet::Transform
 
     rule(:integer => simple(:value)) {
-      IntegerValue.new(value.to_i)
+      IntegerValue.new value.to_i
     }
 
     rule(:string => simple(:value)) {
-      StringValue.new(value.to_s)
+      StringValue.new value.to_s
     }
 
     rule(:boolean => simple(:value)) {
-      BooleanValue.new(value == 'true')
+      BooleanValue.new value == 'true'
     }
 
     rule(:identifier => simple(:name)) {
-      Identifier.new(name.to_s)
+      Identifier.new name.to_s
     }
 
     rule(:required_parameters => simple(:parameter)) {
@@ -36,7 +36,7 @@ module Lila
          :rest_parameter => simple(:rest_parameter)) {
       parameters = if parameter.instance_of? String then []
                    else [parameter] end
-      ParameterList.new(parameters + [rest_parameter], true)
+      ParameterList.new parameters + [rest_parameter], true
     }
 
     rule(:required_parameters => sequence(:parameters)) {
@@ -49,7 +49,7 @@ module Lila
     }
 
     rule(:parameter => simple(:parameter)) {
-      Parameter.new(parameter.to_s)
+      Parameter.new parameter.to_s
     }
 
     rule(:superclasses => simple(:expression)) {
@@ -62,7 +62,7 @@ module Lila
 
     rule(:parameter => simple(:parameter),
          :type => simple(:type)) {
-      Parameter.new(parameter.to_s, type)
+      Parameter.new parameter.to_s, type
     }
 
     rule(:arguments => simple(:argument)) {
@@ -77,12 +77,12 @@ module Lila
     rule(:expression => simple(:expression),
          :calls => sequence(:calls)) {
       calls.reduce(expression) { |result, arguments|
-        Call.new(result, arguments)
+        Call.new result, arguments
       }
     }
 
     rule(:statements => sequence(:statements)) {
-      Program.new(statements)
+      Program.new statements
     }
 
     rule(:function_definition =>
@@ -98,7 +98,7 @@ module Lila
           :parameter_list => simple(:parameter_list),
           :predicate => simple(:predicate),
           :body => simple(:body)}) {
-      MethodDefinition.new(name.to_s, parameter_list, predicate, body)
+      MethodDefinition.new name.to_s, parameter_list, predicate, body
     }
 
     rule(:class_definition =>
@@ -120,13 +120,13 @@ module Lila
 
     rule(:parameter_list => simple(:parameter_list),
          :body => simple(:body)) {
-      Function.new(parameter_list, body)
+      Function.new nil, parameter_list, body
     }
 
     rule(:test => simple(:test),
          :consequent => simple(:consequent),
          :alternate => simple(:alternate)) {
-      Conditional.new(test, consequent, alternate)
+      Conditional.new test, consequent, alternate
     }
 
     rule(:test => simple(:test),
@@ -141,12 +141,12 @@ module Lila
     }
 
     rule(:body => sequence(:expressions)) {
-      Sequence.new(expressions)
+      Sequence.new expressions
     }
 
     rule(:identifier => simple(:name),
          :value => simple(:value)) {
-      VariableDefinition.new(name.to_s, value)
+      VariableDefinition.new name.to_s, value
     }
 
     # macros
@@ -154,13 +154,13 @@ module Lila
     rule(:let_expr => {:identifier => simple(:identifier),
                        :value => simple(:value),
                        :body => simple(:body)}) {
-      Macros.bind(identifier.name.to_s, value, body)
+      Macros.bind identifier.name.to_s, value, body
     }
 
     rule(:or_expr => {:left => simple(:left),
                       :right => simple(:right)}) {
       name = Context.new_name
-      value = Identifier.new(name)
+      value = Identifier.new name
       Macros.bind name, left,
                   Sequence.new([Conditional.new(value, value, right)])
     }
@@ -173,26 +173,26 @@ module Lila
     }
 
     rule(:test_pred => simple(:expression)) {
-      TestPredicate.new(expression)
+      TestPredicate.new expression
     }
 
     rule(:not_pred => simple(:predicate)) {
-      NotPredicate.new(predicate)
+      NotPredicate.new predicate
     }
 
     rule(:and_pred => {:left => simple(:left),
                        :right => simple(:right)}) {
-      AndPredicate.new(left, right)
+      AndPredicate.new left, right
     }
 
     rule(:or_pred => {:left => simple(:left),
                       :right => simple(:right)}) {
-      OrPredicate.new(left, right)
+      OrPredicate.new left, right
     }
 
     rule(:type_pred => {:expression => simple(:expression),
                         :type => simple(:type)}) {
-      predicate = TypePredicate.new(expression, nil)
+      predicate = TypePredicate.new expression, nil
       # temporarily store expresssion,
       # evaluated to actual class by interpreter
       predicate.typeExpression = type
