@@ -15,7 +15,8 @@ public class Core {
 	static LilaFunction exportFunction
 		(String exportedName, String name, MethodType type)
 	{
-		LilaFunction function = LilaFunction.wrap(Core.class, name, type);
+		LilaFunction function =
+			LilaFunction.wrap(Core.class, name, type, exportedName);
 		RT.ENV.put(exportedName, function);
 		return function;
 	}
@@ -168,6 +169,10 @@ public class Core {
 			object = (LilaObject)mh.invokeExact(rest.array);
 		} else {
 			object = new LilaObject(lilaClass);
+			// TODO: replace with call to initialize
+			String[] properties = lilaClass.classProperties;
+			for (int i = 0; i < rest.array.length && i < properties.length; i++)
+				object.setProperty(properties[i], rest.array[i]);
 		}
 		return object;
 	}
@@ -258,5 +263,60 @@ public class Core {
 		exportFunction("apply",
 		               methodType(LilaObject.class,
 		                          LilaFunction.class, LilaArray.class));
+	}
+
+	// get
+
+	static LilaObject get(LilaObject object, LilaString property) {
+		return object.getProperty(property.string);
+	}
+
+	static {
+		exportFunction("get",
+		               methodType(LilaObject.class,
+		                          LilaObject.class, LilaString.class));
+	}
+
+	// set!
+
+	static LilaObject set(LilaObject object, LilaString property, LilaObject value) {
+		object.setProperty(property.string, value);
+		return value;
+	}
+
+	static {
+		exportFunction("set!", "set",
+		               methodType(LilaObject.class,
+		                          LilaObject.class, LilaString.class, LilaObject.class));
+	}
+
+	// inc!
+
+	static LilaInteger inc(LilaObject object, LilaString property) {
+		LilaObject value = object.getProperty(property.string);
+		long currentValue = (value instanceof LilaInteger
+							 ? (long)value.getJavaValue()
+							 : 0);
+		LilaInteger newValue = new LilaInteger(currentValue + 1);
+		object.setProperty(property.string, newValue);
+		return newValue;
+	}
+
+	static {
+		exportFunction("inc!", "inc",
+		               methodType(LilaInteger.class,
+		                          LilaObject.class, LilaString.class));
+	}
+
+
+	// time
+
+	static LilaInteger time() {
+		return new LilaInteger(System.currentTimeMillis());
+	}
+
+	static {
+		exportFunction("time",
+		               methodType(LilaInteger.class));
 	}
 }

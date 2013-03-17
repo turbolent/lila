@@ -104,7 +104,18 @@ module Lila
     rule(:class_definition =>
          {:identifier => simple(:name),
           :superclasses => sequence(:superclasses)}) {
-      ClassDefinition.new(name.to_s, superclasses)
+      ClassDefinition.new name.to_s, superclasses
+    }
+
+    rule(:class_definition =>
+         {:identifier => simple(:name),
+          :superclasses => sequence(:superclasses),
+          :properties => sequence(:properties)}) {
+      ClassDefinition.new name.to_s, superclasses, properties
+    }
+
+    rule(:property => simple(:name)) {
+      name.to_s
     }
 
     rule(:parameter_list => simple(:parameter_list),

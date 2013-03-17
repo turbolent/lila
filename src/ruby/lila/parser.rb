@@ -47,7 +47,20 @@ module Lila
     rule(:class_definition) {
       (kDEFINE >> kCLASS >>
         identifier >>
-        superclasses.as(:superclasses)).as(:class_definition)
+        superclasses.as(:superclasses) >>
+        properties.maybe).as(:class_definition)
+    }
+
+    rule(:properties) {
+      tOPEN_BRACE >>
+      (property.repeat(1,1) >>
+        (tSEMICOLON >> property).repeat >>
+        tSEMICOLON.maybe).as(:properties) >>
+      tCLOSE_BRACE
+    }
+
+    rule(:property) {
+      tNAME.as(:property) >> tWS?
     }
 
     rule(:superclasses) {

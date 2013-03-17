@@ -1,5 +1,8 @@
 package lila.runtime;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class LilaObject {
 
 	public static LilaClass lilaClass =
@@ -11,6 +14,8 @@ public class LilaObject {
 	}
 
 	private LilaClass type;
+
+	private Map<String,LilaObject> properties = new HashMap<>();
 
 	public LilaObject(LilaClass type) {
 		this.type = type;
@@ -26,5 +31,24 @@ public class LilaObject {
 
 	public boolean isTrue() {
 		return true;
+	}
+
+	public LilaObject getProperty(String propertyName) {
+		LilaObject value = this.properties.get(propertyName);
+		return value == null ? LilaBoolean.FALSE : value;
+	}
+
+	public void setProperty(String property, LilaObject value) {
+		this.properties.put(property, value);
+	}
+
+	// wrapper, called from lila programs (parameters are lila objects)
+	public static LilaObject make(LilaObject[] arguments) {
+		return make();
+	}
+
+	// actual implementation, called internally (parameters are Java objects)
+	public static LilaObject make() {
+		return new LilaObject(lilaClass);
 	}
 }

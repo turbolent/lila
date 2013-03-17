@@ -10,12 +10,16 @@ public class LilaClass extends LilaObject {
 	// see static initialization in LilaObject
 	public static LilaClass lilaClass;
 
+	private static int classCount = 0;
+
+	private int identifier;
 	protected String name;
 	private Class<?> javaClass;
 	private boolean builtin;
 	private LilaClass[] superclasses;
 	private List<LilaClass> allSuperclasses;
 	private Set<LilaClass> allSubclasses = new HashSet<>();
+	String[] classProperties;
 
 
 	public LilaClass(boolean builtin, String name,
@@ -28,6 +32,7 @@ public class LilaClass extends LilaObject {
         Class<?> javaClass, LilaClass... superclasses)
 	{
 		super(type);
+		this.identifier = classCount++;
 		this.builtin = builtin;
 		this.name = name;
 		this.javaClass = javaClass;
@@ -40,31 +45,46 @@ public class LilaClass extends LilaObject {
 
 	//// Instantiation
 
-	// wrapper, called from programs with lila objects
+	// wrapper, called from lila programs (parameters are lila objects)
 	public static LilaObject make(LilaObject[] arguments) {
 		String name = (arguments.length > 0
-						? ((LilaString)arguments[0]).string
+						? (String)arguments[0].getJavaValue()
 						: null);
 		// no casting
 		LilaClass[] actualSuperclasses = null;
 		if (arguments.length > 1) {
-			LilaObject[] superclasses = ((LilaArray)arguments[1]).array;
+			LilaObject[] superclasses = (LilaObject[])arguments[1].getJavaValue();
 			actualSuperclasses =
 				Arrays.copyOf(superclasses, superclasses.length,
 				              LilaClass[].class);
 		}
-		return make(name, actualSuperclasses);
+		String[] actualProperties = null;
+		if (arguments.length > 2) {
+			LilaObject[] properties = (LilaObject[])arguments[2].getJavaValue();
+			actualProperties = new String[properties.length];
+			for (int i = 0; i < properties.length; i++) {
+				LilaObject property = properties[i];
+				actualProperties[i] = (String)property.getJavaValue();
+			}
+		}
+		return make(name, actualSuperclasses, actualProperties);
 	}
 
-	// actual implementation, called internally with java objects
-	public static LilaClass make(String name, LilaClass[] superclasses) {
+	// actual implementation, called internally (parameters are Java objects)
+	public static LilaClass make(String name, LilaClass[] superclasses, String[] properties) {
 		if (superclasses == null || superclasses.length == 0)
 			superclasses = new LilaClass[] { LilaObject.lilaClass };
-		return new LilaClass(false, name, null, superclasses);
+		LilaClass result = new LilaClass(false, name, null, superclasses);
+		result.classProperties = properties;
+		return result;
 	}
 
 
 	//// Getters
+
+	public int getIdentifier() {
+		return this.identifier;
+	}
 
 	public boolean isBuiltin() {
 		return this.builtin;

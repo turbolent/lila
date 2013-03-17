@@ -56,3 +56,16 @@ assert(instance?(true, <true>));
 assert(not(instance?(true, <false>)));
 
 
+// properties
+
+define class <xyz> (<object>) {
+  a;
+  b
+};
+
+let xyz = make(<xyz>, 1, 2) {
+  assert(==(get(xyz, "a"), 1));  
+  assert(==(get(xyz, "b"), 2));
+  set!(xyz, "a", 3);
+  assert(==(get(xyz, "a"), 3));
+};

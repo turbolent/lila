@@ -90,12 +90,13 @@ module Lila
     end
   end
 
-  class ClassDefinition < Struct.new :name, :superclasses
+  class ClassDefinition < Struct.new :name, :superclasses, :properties
     def interpret(interpreter)
       superclasses = self.superclasses.map { |superclass|
         interpreter.eval superclass
-      }.to_java(LilaClass)
-      lilaClass = LilaClass.make(self.name, superclasses)
+      }.to_java LilaClass
+      properties = (self.properties || []).to_java :string
+      lilaClass = LilaClass.make self.name, superclasses, properties
       RT.setValue self.name, lilaClass
       lilaClass
     end
