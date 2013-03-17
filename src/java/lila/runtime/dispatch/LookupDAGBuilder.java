@@ -1,7 +1,17 @@
 package lila.runtime.dispatch;
 
+import static java.lang.invoke.MethodType.methodType;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.V1_7;
+
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,9 +24,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+
+import lila.runtime.DynamicClassLoader;
 import lila.runtime.Expression;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaGenericFunction;
+import lila.runtime.LilaObject;
 
 
 
@@ -37,6 +52,8 @@ class DAGBuilder {
 	Set<LilaClass> allClasses;
 	private Method inapplicableMethod = inapplicable;
 	private Method ambiguousMethod = ambiguous;
+
+	LilaGenericFunction gf;
 
 	public DAGBuilder(Set<LilaClass> allClasses) {
 		this.allClasses = allClasses;
@@ -124,47 +141,45 @@ class DAGBuilder {
 		return result;
 	}
 
-	Map<Pair<Set<Case>,Set<Expression>>,Node> memo = new HashMap<>();
+	Map<Pair<Set<Case>,Set<Expression>>,LookupDAGNode> memo = new HashMap<>();
 
-	Map<Method,LeafNode> leafNodes = new HashMap<>();
+	Map<Method,LookupDAGLeafNode> leafNodes = new HashMap<>();
 
 
-	Node buildLookupDAG(LilaGenericFunction gf) {
+	LookupDAGNode buildLookupDAG(LilaGenericFunction gf) {
+		// TODO: constructor?
+		this.gf = gf;
 		Set<Case> cases = new HashSet<>();
 		cases.addAll(gf.cases.values());
 		this.constraints = constraints(cases, gf.inputExpressions);
 		return buildSubDAG(cases, allExpressions(cases));
 	}
 
-	Node buildSubDAG(Set<Case> cases, Set<Expression> expressions) {
+	LookupDAGNode buildSubDAG(Set<Case> cases, Set<Expression> expressions) {
 		Pair<Set<Case>,Set<Expression>> pair = new Pair<>(cases, expressions);
-		Node node = this.memo.get(pair);
+		LookupDAGNode node = this.memo.get(pair);
 		if (node != null)
 			return node;
 
 		if (expressions.isEmpty()) {
 			Method targetMethod = computeTarget(cases);
-			LeafNode leafNode = leafNodes.get(targetMethod);
+			LookupDAGLeafNode leafNode = leafNodes.get(targetMethod);
 			if (leafNode == null) {
-				leafNode = new LeafNode();
-				leafNode.method = targetMethod;
+				leafNode = new LookupDAGLeafNode(this.gf, targetMethod);
 				leafNodes.put(targetMethod, leafNode);
 			}
 			node = leafNode;
 		} else {
-			InteriorNode interiorNode = new InteriorNode();
-			node = interiorNode;
 			Expression expression = pickExpression(expressions, cases);
-			interiorNode.expression = expression;
+			LookupDAGInteriorNode interiorNode =
+				new LookupDAGInteriorNode(this.gf, expression);
+			node = interiorNode;
 			for (LilaClass clazz : expression.getStaticClasses()) {
 				Set<Case> targetCases = targetCases(cases, expression, clazz);
 				Set<Expression> targetExpressions =
 					targetExpressions(expressions, targetCases, expression);
-				Node targetNode = buildSubDAG(targetCases, targetExpressions);
-
-
-				interiorNode.edges.put(clazz, targetNode);
-				interiorNode.edges.put(clazz, targetNode);
+				LookupDAGNode targetNode = buildSubDAG(targetCases, targetExpressions);
+				interiorNode.addEdge(new LookupDAGEdge(clazz, targetNode));
 			}
 		}
 		this.memo.put(pair, node);
@@ -305,7 +320,7 @@ class DAGBuilder {
 
 	// Debugging
 
-	void dump(Node node) throws Exception {
+	void dump(LookupDAGNode node) throws Exception {
 		FileWriter fileWriter = new FileWriter("lookupDAG.dot");
 		BufferedWriter writer = new BufferedWriter(fileWriter);
 		writer.write("digraph lookupDAG {\n");
