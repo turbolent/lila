@@ -130,9 +130,14 @@ module Lila
     }
 
     rule(:test => simple(:test),
-        :consequent => simple(:consequent)) {
-      Conditional.new(test, consequent,
-                      BooleanValue.new(false))
+         :consequent => simple(:consequent)) {
+      Conditional.new test, consequent,
+                      BooleanValue.new(false)
+    }
+
+    rule(:test => simple(:test),
+         :body => simple(:body)) {
+      Loop.new test, body
     }
 
     rule(:body => sequence(:expressions)) {

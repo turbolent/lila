@@ -573,6 +573,55 @@ module Lila
      end
   end
 
+  class Loop < Expression
+    attr_reader :test, :body
+
+    def initialize(test, body)
+      super()
+      @test = test
+      @body = body
+    end
+
+    def hash
+      @test.hash ^ @body.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @test == other.test and
+        @body == other.body
+    end
+
+    alias eql? ==
+
+    def resolveBindings(env)
+      @test = @test.resolveBindings env
+      @body = @body.resolveBindings env
+      self
+    end
+
+    def compile(context, builder)
+      test_label = gensym
+      builder.label test_label
+      @test.compile context, builder
+      is_true builder
+      end_label = gensym
+      builder.ifeq end_label
+      @body.compile context, builder
+      builder.pop
+      builder.goto test_label
+      builder.label end_label
+      BooleanValue.new(false).compile context, builder
+    end
+
+    def close(context)
+      [@test, @body].each { |expression|
+        expression.close context
+      }
+     end
+
+     def toString
+       "while #{@test} { #{@body} }"
      end
   end
 

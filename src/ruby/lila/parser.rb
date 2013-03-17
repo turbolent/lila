@@ -163,6 +163,7 @@ module Lila
       (bracketed_expression |
        let_expression |
        if_expression |
+       while_expression |
        function |
        value |
        identifier) >> tWS?
@@ -178,6 +179,11 @@ module Lila
       (kIF >> expression.as(:test) >>
         body.as(:consequent) >>
         (kELSE >> body.as(:alternate)).maybe)
+    }
+
+    rule(:while_expression) {
+      kWHILE >> expression.as(:test) >>
+        body.as(:body)
     }
 
     rule(:bracketed_expression) {
@@ -270,7 +276,7 @@ module Lila
     }
 
     rule(:tCHAR) {
-      match(/[a-zA-Z_\-+*\/?<>=]/)
+      match(/[a-zA-Z_\-+*\/?!<>=]/)
     }
 
     def token (string)
@@ -306,7 +312,7 @@ module Lila
       end
     end
 
-    keywords :class, :function, :method, :define, :if, :else, :let,
-             :when, :not, :test
+    keywords :class, :function, :method, :define, :if, :else,
+             :let, :while, :when, :not, :test
   end
 end
