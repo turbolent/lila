@@ -9,4 +9,9 @@ define function fib (n) {
   }
 };
 
-fib(23);
+let start = time() {
+  print(as-string(fib(35)));
+  let end = time() {
+    -(end, start)
+  }
+};

@@ -39,6 +39,15 @@ define add23 = adder(23);
 
 print(as-string(add23(42)));
 
+
+(function (x) {
+  x;
+  (function (y) {
+    y;
+    +(x, y)
+   })(42)
+})(23);
+
 (function (x) {
   x;
   (function (z) {
@@ -50,6 +59,7 @@ print(as-string(add23(42)));
   })(100)
 })(23);
 
+print("here...");
 
 // conditionals
 
@@ -60,3 +70,22 @@ if true { "true" } else { "false" };
 1 && true;
 2 && "true";
 1 || 2;
+
+if (1) { 1 } else { 2 };
+
+// TODO: stack frame map broken
+
+if (1) { 1; 2 } else { 3 };
+
+if (1) { 1 } else { (2, 3) };
+
+let counter = make(<object>) {
+  set!(counter, "i", 0);
+  while <(get(counter, "i"), 10) {
+    print("x"); 
+    inc!(counter, "i");
+  }
+};
+
+(if true { true } else { true },
+ if true { true } else { true });

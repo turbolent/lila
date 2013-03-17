@@ -33,7 +33,7 @@ define method foo2 ()
 
 define method foo3 ()
   when (a := n)
-       && (test (if (a) { a } else { b; a }))
+       && (test (if (a) { c; a } else { b; a }))
 {
   false
 };
@@ -43,3 +43,17 @@ define method bar ()
 {
   false
 };
+
+define method bar2 ()
+  when (test (function (a, b) { b })) && (test (function (a, b) { b }))
+{
+  false
+};
+
+define method bar3 ()
+  when (test if (a) { a; b } else {2; 3} ) && (test if (a) { a; b } else {2; 3})
+{
+  false
+};
+
+
