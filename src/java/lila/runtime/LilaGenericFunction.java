@@ -3,6 +3,7 @@ package lila.runtime;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MutableCallSite;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,23 +23,22 @@ public class LilaGenericFunction extends LilaCallable {
 	public Map<Predicate,Case> cases = new HashMap<>();
 	List<LilaObject> closedArguments = Collections.emptyList();
 
+	public List<Expression> inputExpressions = Collections.emptyList();
 
 	public LilaGenericFunction(String name) {
 		super(lilaClass, name);
 	}
 
+	public LilaGenericFunction(String name, Expression... inputExpressions) {
+		this(name);
+		// TODO: remove, debugging
+		int cost = 0;
+		for (Expression inputExpression : inputExpressions)
+			inputExpression.cost = cost++;
 
-// TODO:
-	public List<Expression> inputExpressions = Collections.emptyList();
+		this.inputExpressions = Arrays.asList(inputExpressions);
+	}
 
-//	public DispatchFunction(Expression... inputExpressions) {
-//		// TODO: remove, debugging
-//		int cost = 0;
-//		for (Expression inputExpression : inputExpressions)
-//			inputExpression.cost = cost++;
-//
-//		this.inputExpressions = Arrays.asList(inputExpressions);
-//	}
 
  	public void addMethodHandle(Predicate predicate, MethodHandle handle) {
 		addMethod(predicate, new Method(handle));

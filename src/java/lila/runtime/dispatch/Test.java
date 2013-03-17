@@ -72,15 +72,15 @@ class BinaryExpression extends Expression {
 
 public class Test {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Throwable {
 
 		RT.initialize();
 
-		test1();
+		// test1();
 		// System.out.println();
 		// test2();
 
-		// test3();
+		test3();
 
 	}
 
@@ -89,6 +89,14 @@ public class Test {
 		final LilaClass clazzB = new LilaClass(false, "B", null, clazzA);
 		final LilaClass clazzC = new LilaClass(false, "C", null);
 		final LilaClass clazzD = new LilaClass(false, "D", null, clazzA, clazzC);
+
+
+		Set<LilaClass> allClasses = new HashSet<LilaClass>() {{
+			add(clazzA);
+			add(clazzB);
+			add(clazzC);
+			add(clazzD);
+		}};
 
 		Expression exp1 = new Var("f1");
 		exp1.name = "e1";
@@ -100,12 +108,7 @@ public class Test {
 
 		Expression exp2 = new Var("f1.x");
 		exp2.name = "e3";
-		exp2.staticClasses = new HashSet<LilaClass>() {{
-			add(clazzA);
-			add(clazzB);
-			add(clazzC);
-			add(clazzD);
-		}};
+		exp2.staticClasses = allClasses;
 
 		Expression exp3 = new Var("f2.x");
 		exp3.name = "e5";
@@ -123,14 +126,9 @@ public class Test {
 
 		Expression exp5 = new Var("f2");
 		exp5.name = "e2";
-		exp5.staticClasses = new HashSet<LilaClass>() {{
-			add(clazzA);
-			add(clazzB);
-			add(clazzC);
-			add(clazzD);
-		}};
+		exp5.staticClasses = allClasses;
 
-		LilaGenericFunction gf = new LilaGenericFunction();
+		LilaGenericFunction gf = new LilaGenericFunction(null, exp1, exp5);
 
 		Predicate pred1 =
 			AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
@@ -206,10 +204,13 @@ public class Test {
 //
 //		System.out.println(df2);
 
+		Set<LilaClass> classes = new HashSet<>();
+		classes.addAll(allClasses);
+		classes.add(LilaTrue.lilaClass);
+		classes.add(LilaFalse.lilaClass);
 
-		Set<LilaClass> classes = LilaObject.lilaClass.getAllSubclasses();
 		DAGBuilder builder = new DAGBuilder(classes);
-		Node node = builder.buildLookupDAG(gf);
+		LookupDAGNode node = builder.buildLookupDAG(gf);
 		System.out.println(node);
 		builder.dump(node);
 	}
@@ -268,7 +269,7 @@ public class Test {
 
 		Set<LilaClass> classes = LilaObject.lilaClass.getAllSubclasses();
 		DAGBuilder builder = new DAGBuilder(classes);
-		Node node = builder.buildLookupDAG(gf);
+		LookupDAGNode node = builder.buildLookupDAG(gf);
 		builder.dump(node);
 
 		ExpressionEnvironment env = new ExpressionEnvironment();
@@ -278,7 +279,7 @@ public class Test {
 		System.out.println(node.evaluate(env));
 	}
 
-	static void test3() throws Exception {
+	static void test3() throws Throwable {
 		// isomorphic
 
 		final LilaClass treeNode = new LilaClass(false, "TreeNode", null);
@@ -330,7 +331,7 @@ public class Test {
 		gf.dumpMethods();
 
 		DAGBuilder builder = new DAGBuilder(classes);
-		Node node = builder.buildLookupDAG(gf);
+		LookupDAGNode node = builder.buildLookupDAG(gf);
 		builder.dump(node);
 	}
 
