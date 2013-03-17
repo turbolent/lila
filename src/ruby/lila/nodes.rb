@@ -115,26 +115,6 @@ module Lila
       builder.invokevirtual LilaObject, 'isTrue', [Java::boolean]
     end
 
-    # assumes constant on stack
-    def box(builder, type, boxed_type, value = @value)
-      builder.new boxed_type
-      builder.dup_x1
-      builder.swap
-      builder.invokespecial boxed_type, '<init>', [Java::void, type]
-    end
-
-    def box_integer(builder)
-      box builder, Java::int, LilaInteger
-    end
-
-    def box_string(builder)
-      box builder, Java::java.lang.String, LilaString
-    end
-
-    def box_boolean(builder)
-      builder.invokestatic LilaBoolean, 'box', [LilaBoolean, Java::boolean]
-    end
-
     def interpret(interpreter)
       puts interpreter.eval(self)
     end
@@ -176,15 +156,21 @@ module Lila
 
   class IntegerValue < Value
     def compile(context, builder)
-      builder.ldc @value
-      box_integer builder
+      builder.new LilaInteger
+      builder.dup
+      builder.ldc_long @value
+      builder.invokespecial LilaInteger, '<init>',
+        [Java::void, Java::long]
     end
   end
 
   class StringValue < Value
     def compile(context, builder)
+      builder.new LilaString
+      builder.dup
       builder.ldc @value
-      box_string builder
+      builder.invokespecial LilaString, '<init>',
+        [Java::void, Java::java.lang.String]
     end
 
     def toString

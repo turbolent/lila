@@ -6,9 +6,9 @@ public class LilaInteger extends LilaObject {
 		new LilaClass(true, "<integer>", LilaInteger.class,
 		              LilaObject.lilaClass);
 
-	public int value;
+	public long value;
 
-	public LilaInteger(int value) {
+	public LilaInteger(long value) {
 		super(lilaClass);
 		this.value = value;
 	}
@@ -18,12 +18,12 @@ public class LilaInteger extends LilaObject {
 		return this.value;
 	}
 
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + value;
+		result = prime * result
+			+ (int) (value ^ (value >>> 32));
 		return result;
 	}
 
