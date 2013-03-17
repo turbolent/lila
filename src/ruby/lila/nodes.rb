@@ -22,6 +22,13 @@ java_import 'java.lang.invoke.MethodHandle'
 java_import 'java.lang.invoke.CallSite'
 java_import 'java.lang.invoke.MethodHandles$Lookup'
 
+
+def gensym
+  $gensym||=0
+  $gensym += 1
+  ('__' + $gensym.to_s).to_sym
+end
+
 module Lila
 
   class Program < Struct.new :statements; end
@@ -543,14 +550,16 @@ module Lila
     end
 
     def compile(context, builder)
-      @test.compile(context, builder)
+      @test.compile context, builder
       is_true builder
-      builder.ifeq :else
-      @consequent.compile(context, builder)
-      builder.goto :end
-      builder.label :else
-      @alternate.compile(context, builder)
-      builder.label :end
+      else_label = gensym
+      builder.ifeq else_label
+      @consequent.compile context, builder
+      end_label = gensym
+      builder.goto end_label
+      builder.label else_label
+      @alternate.compile context, builder
+      builder.label end_label
     end
 
     def close(context)
@@ -560,7 +569,10 @@ module Lila
      end
 
      def toString
-       "if (#{@test}) { #{@consequent} } else { #{@alternate} }"
+       "if #{@test} { #{@consequent} } else { #{@alternate} }"
+     end
+  end
+
      end
   end
 
@@ -591,9 +603,12 @@ module Lila
     end
 
     def compile(context, builder)
-      @expressions.each { |expression|
-        expression.compile(context, builder)
+      # discard all but last value
+      @expressions[0..-2].each { |expression|
+        expression.compile context, builder
+        builder.pop
       }
+      @expressions.last.compile context, builder
     end
 
     def close(context)
