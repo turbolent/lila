@@ -1,11 +1,15 @@
 package lila.runtime.dispatch;
 
-import java.util.ArrayList;
-import java.util.Set;
+import java.lang.invoke.MethodHandle;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import lila.runtime.Expression;
 import lila.runtime.ExpressionEnvironment;
+import lila.runtime.ExpressionInfo;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaFalse;
 import lila.runtime.LilaGenericFunction;
@@ -76,6 +80,9 @@ public class Test {
 
 		RT.initialize();
 
+
+		testDispatchTree();
+
 		// test1();
 		// System.out.println();
 		// test2();
@@ -83,6 +90,79 @@ public class Test {
 		test3();
 
 	}
+
+
+
+
+
+	private static void testDispatchTree() throws Throwable {
+		LookupDAGInteriorNode node = new LookupDAGInteriorNode(null, null);
+
+		int[] targets = new int[]{
+			1, 2, 3, 1, 4, 2, 5, 6, 1, 7, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 8, 8, 8, 8,
+			10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+			11, 11, 11, 11, 11, 11, 11, 11, 11
+		};
+
+		int[] freqs = new int[]{
+			6, 7, 7, 6, 8, 8, 7, 6, 8, 7, 10, 11, 10, 9, 500, 9, 10, 10, 8, 15, 17, 7, 8, 15,
+			10, 1, 2, 2, 1, 2, 2, 100, 1, 2, 2, 2, 1, 1, 1, 2, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3
+		};
+
+		Map<Integer,Integer> frequencies = new HashMap<>();
+
+		// generate classes and one unique target node for each target
+		Map<Integer,LookupDAGLeafNode> targetNodes = new HashMap<>();
+		for (int i = 0; i < targets.length; i++) {
+			LilaClass c = new LilaClass(false, "c" + i, null);
+			frequencies.put(c.getIdentifier(), freqs[i]);
+			int target = targets[i];
+			LookupDAGLeafNode targetNode = targetNodes.get(target);
+			if (targetNode == null) {
+				Method method = new Method(null);
+				method.identifier = "n" + targets[i];
+				targetNode = new LookupDAGLeafNode(null, method);
+				targetNodes.put(target, targetNode);
+			}
+			node.edges.add(new LookupDAGEdge(c, targetNode));
+		}
+
+		DispatchTreeNode dispatchTree = new DispatchTreeBuilder()
+			.buildDispatchTree(node, frequencies);
+
+		System.err.println(dispatchTree);
+		DispatchTreeBuilder.dump(dispatchTree);
+
+		MethodHandle handle = dispatchTree.compileHandle();
+		benchmarkHandle(handle, frequencies);
+
+		MethodHandle handle2 =
+			DispatchTreeBuilder.compileASMHandle(dispatchTree);
+		benchmarkHandle(handle2, frequencies);
+	}
+
+
+	private static void benchmarkHandle
+		(MethodHandle handle, Map<Integer,Integer> frequencies)
+		throws Throwable
+	{
+		long startTime = System.currentTimeMillis();
+		for (Entry<Integer,Integer> entry : frequencies.entrySet()) {
+			int frequency = entry.getValue() * 10000;
+			int identifier = entry.getKey();
+			System.err.println(String.format("invoking %d %d times",
+			                                 identifier, frequency));
+			for (int j = 0; j < frequency; j++) {
+				LookupDAGLeafNode targetNode =
+					(LookupDAGLeafNode)(LookupDAGNode)handle.invokeExact(identifier);
+				if (j == 0)
+					System.err.println(targetNode.method.identifier);
+			}
+		}
+		long endTime = System.currentTimeMillis();
+		System.out.println("Time: " + (endTime-startTime) + "ms");
+	}
+
 
 	static void test1() throws Exception {
 		final LilaClass clazzA = new LilaClass(false, "A", null);
@@ -328,6 +408,68 @@ public class Test {
 		DAGBuilder builder = new DAGBuilder(classes);
 		LookupDAGNode node = builder.buildLookupDAG(gf);
 		builder.dump(node);
+
+		// test evaluation
+
+		ExpressionEnvironment env = new ExpressionEnvironment();
+		env.put("t1", new LilaObject(emptyNode));
+		env.put("t2", new LilaObject(emptyNode));
+		System.err.println(node.evaluate(env) == m1);
+
+		env.put("t1", new LilaObject(emptyNode));
+		env.put("t2", new LilaObject(dataNode));
+		System.err.println(node.evaluate(env) == m2);
+
+		env.put("t1", new LilaObject(dataNode));
+		env.put("t2", new LilaObject(emptyNode));
+		System.err.println(node.evaluate(env) == m2);
+
+		env.put("t1", new LilaObject(dataNode));
+		env.put("t2", new LilaObject(dataNode));
+		System.err.println(node.evaluate(env) == m3);
+
+
+
+		// provide information about "compiled" expressions
+		gf.expressionInfo.put(exp1, new ExpressionInfo(Test.class.getName(), "test3_exp1", null));
+		gf.expressionInfo.put(exp2, new ExpressionInfo(Test.class.getName(), "test3_exp2", null));
+
+
+		MethodHandle compiled = DAGBuilder.compile(node, 2);
+		// TODO: change to MethodHandle
+		Method method = (Method)compiled
+			.invokeExact(gf,
+			             new LilaObject(emptyNode),
+			             new LilaObject(emptyNode));
+		System.err.println(method == m1);
+
+		Method method2 = (Method)compiled
+			.invokeExact(gf,
+			             new LilaObject(emptyNode),
+			             new LilaObject(dataNode));
+		System.err.println(method2 == m2);
+
+		Method method3 = (Method)compiled
+			.invokeExact(gf,
+			             new LilaObject(dataNode),
+			             new LilaObject(emptyNode));
+		System.err.println(method3 == m2);
+
+		Method method4 = (Method)compiled
+			.invokeExact(gf,
+			             new LilaObject(dataNode),
+			             new LilaObject(dataNode));
+		System.err.println(method4 == m3);
+	}
+
+	public static LilaObject test3_exp1 (LilaObject t1, LilaObject t2) {
+		System.err.println("In predicate expression exp1");
+		return t1;
+	}
+
+	public static LilaObject test3_exp2 (LilaObject t1, LilaObject t2) {
+		System.err.println("In predicate expression exp2");
+		return t2;
 	}
 
 }

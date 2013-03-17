@@ -15,6 +15,7 @@ java_import 'lila.runtime.Expression' do
   'InternalExpression'
 end
 java_import 'lila.runtime.LilaGenericFunction'
+java_import 'lila.runtime.ExpressionInfo'
 
 
 java_import 'java.lang.invoke.MethodType'
@@ -43,8 +44,8 @@ module Lila
       @expression_info = {}
     end
 
-    def getExpressionMethod(expression)
-      @expression_method[expression]
+    def getExpressionInfo(expression)
+      @expression_info[expression]
     end
 
     # TODO: copy function
@@ -88,6 +89,8 @@ module Lila
           java_sig = sig.map { |c| c.java_class }
           handle = interpreter.loader.findMethod clazz,
             method_name, *java_sig
+          gf.expression_info[expression] =
+            ExpressionInfo.new clazz.java_class.name, method_name, handle
         end
       }
 

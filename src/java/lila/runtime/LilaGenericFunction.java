@@ -121,9 +121,10 @@ public class LilaGenericFunction extends LilaCallable {
 		return null;
 	}
 
-	// NOTE: implemented in interpreter
-	MethodHandle getExpressionMethod(Expression expression) {
-		return null;
+	// NOTE: implemented in interpreter, see ruby code
+	// returns the compiled method handle for the given expression
+	public ExpressionInfo getExpressionInfo(Expression expression) {
+		return this.expressionInfo.get(expression);
 	}
 
 	public void dumpMethods() {

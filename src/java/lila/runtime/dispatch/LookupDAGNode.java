@@ -1,8 +1,9 @@
 package lila.runtime.dispatch;
 
+import static java.lang.invoke.MethodType.methodType;
+
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -11,15 +12,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-
 import lila.runtime.Expression;
 import lila.runtime.ExpressionEnvironment;
 import lila.runtime.ExpressionInfo;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaGenericFunction;
 import lila.runtime.LilaObject;
+
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+
 
 
 abstract class LookupDAGNode {
@@ -32,7 +34,7 @@ abstract class LookupDAGNode {
 
 	abstract Method evaluate(ExpressionEnvironment env);
 
-	abstract void compileASM(MethodVisitor mv);
+	abstract void compileASM(MethodVisitor mv, int argumentCount);
 
 
 	// Debugging
@@ -81,45 +83,71 @@ class LookupDAGInteriorNode extends LookupDAGNode {
 
 	List<LookupDAGEdge> edges = new ArrayList<>();
 
-	Map<LilaClass,LookupDAGNode> map = new HashMap<>();
-
-	Expression expression;
+	private Expression expression;
 
 //	DispatchTreeNode dispatchTree;
 
 	public void addEdge(LookupDAGEdge edge) {
 		edges.add(edge);
-		map.put(edge.type, edge.targetNode);
 	}
 
 	@Override
 	public Method evaluate(ExpressionEnvironment env) {
 		LilaObject v = this.expression.evaluate(env);
-//		LookupDAGNode target =
-//			this.dispatchTree.evaluate(v.getType().identifier);
-//		return target.evaluate(env);
-		return map.get(v.getType()).evaluate(env);
+		DispatchTreeNode dispatchTree =
+			new DispatchTreeBuilder().buildDispatchTree(this, null);
+		LookupDAGNode target =
+			dispatchTree.evaluate(v.getType().getIdentifier());
+		return target.evaluate(env);
 	}
 
 	@Override
-	void compileASM(MethodVisitor mv) {
+	void compileASM(MethodVisitor mv, int argumentCount) {
 		DispatchTreeNode dispatchTree =
-			DispatchTreeBuilder.buildDispatchTree(this);
+			new DispatchTreeBuilder().buildDispatchTree(this, null);
 
 		try {
 			DispatchTreeBuilder.dump(dispatchTree);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		// TODO:
-//		MethodHandle expressionMethod =
-//			this.gf.getExpression(this.expression);
-//		expressionMethod.
-		ExpressionInfo info = this.gf.getExpressionInfo(this.expression);
-		System.err.println("I N: " + info.getClassName());
-		// mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, arg1, arg2, arg3)
+		// load arguments
+		int arity = this.gf.getArity();
+		for (int index = 0; index < arity; index++)
+			// +1: function
+			mv.visitVarInsn(Opcodes.ALOAD, index + 1);
+
+		// invoke compiled expression method
+		Class<?>[] parameterTypes = new Class<?>[arity];
+		for (int index = 0; index < arity; index++)
+			parameterTypes[index] = LilaObject.class;
+
+		ExpressionInfo expressionInfo =
+			this.gf.getExpressionInfo(this.expression);
+		String expressionClassName =
+			expressionInfo.getClassName().replace('.', '/');
+		String expressionMethodName = expressionInfo.getMethodName();
+		mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+		                   expressionClassName, expressionMethodName,
+		                   methodType(LilaObject.class, parameterTypes)
+		                   		.toMethodDescriptorString());
+
+		// get type identifier
+		String lilaObjectClassName =
+			LilaObject.class.getName().replace('.', '/');
+		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+		                   lilaObjectClassName, "getType",
+		                   methodType(LilaClass.class)
+		                   		.toMethodDescriptorString());
+		String lilaClassClassName =
+			LilaClass.class.getName().replace('.', '/');
+		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+		                   lilaClassClassName, "getIdentifier",
+		                   methodType(int.class)
+		                   		.toMethodDescriptorString());
+
+		dispatchTree.compileASM(mv, argumentCount);
 	}
 
 	// Debugging
@@ -174,8 +202,12 @@ class LookupDAGLeafNode extends LookupDAGNode {
 	}
 
 	@Override
-	void compileASM(MethodVisitor mv) {
-		// TODO
+	void compileASM(MethodVisitor mv, int argumentCount) {
+		// get method index
+		int methodIndex = this.gf.getMethods().indexOf(this.method);
+		mv.visitLdcInsn(methodIndex);
+		// store in local variable after all arguments (+1: function)
+		mv.visitVarInsn(Opcodes.ISTORE, argumentCount + 1);
 	}
 
 	// Debugging

@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import lila.runtime.DynamicClassLoader;
 import lila.runtime.Expression;
@@ -317,6 +318,101 @@ class DAGBuilder {
 		}
 		return result;
 	}
+
+	// Compilation
+
+	private static int dispatcherCount = 0;
+
+	private static String generateDispatcherName() {
+		dispatcherCount += 1;
+		return "Dispatcher" + dispatcherCount;
+	}
+
+	// argumentCount specific for call-site and without function
+	public static MethodHandle compile(LookupDAGNode node, int argumentCount)
+		throws Throwable
+	{
+		// class definition
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES
+		                                 | ClassWriter.COMPUTE_MAXS);
+
+		String className = generateDispatcherName();
+		cw.visit(V1_7, ACC_PUBLIC | ACC_SUPER, className,
+				null, "java/lang/Object", null);
+
+		// method type
+		int totalArgumentCount = argumentCount + 1;
+		Class<?>[] parameterTypes = new Class<?>[totalArgumentCount];
+		// +1: function is first argument
+		parameterTypes[0] = LilaGenericFunction.class;
+
+	    // set types of actual arguments
+		for (int argument = 1; argument < totalArgumentCount; argument++)
+			parameterTypes[argument] = LilaObject.class;
+		// TODO: change to MethodHandle
+		MethodType dispatcherType = methodType(Method.class, parameterTypes);
+		String dispatcherDescriptor = dispatcherType.toMethodDescriptorString();
+
+		// method definition
+		String methodName = "dispatch";
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, methodName,
+		                                  dispatcherDescriptor, null, null);
+
+		mv.visitCode();
+		node.compileASM(mv, argumentCount);
+
+
+		// load GF (first argument)
+		mv.visitVarInsn(Opcodes.ALOAD, 0);
+
+		// load GF's method list
+		String lilaGenericFunctionClassName =
+			LilaGenericFunction.class.getName().replace('.', '/');
+		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+		                   lilaGenericFunctionClassName, "getMethods",
+		                   methodType(List.class)
+		                   		.toMethodDescriptorString());
+
+		// load method list index from local variable
+		mv.visitVarInsn(Opcodes.ILOAD, totalArgumentCount);
+
+		// access method list item
+		String listClassName =
+			List.class.getName().replace('.', '/');
+		mv.visitMethodInsn(Opcodes.INVOKEINTERFACE,
+		                   listClassName, "get",
+		                   methodType(Object.class, int.class)
+		                   		.toMethodDescriptorString());
+
+		// cast to Method
+		String methodClassName =
+			Method.class.getName().replace('.', '/');
+		mv.visitTypeInsn(Opcodes.CHECKCAST, methodClassName);
+
+
+		// return method
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+		cw.visitEnd();
+
+		DynamicClassLoader loader = new DynamicClassLoader();
+		byte[] code = cw.toByteArray();
+		FileOutputStream f;
+		try {
+			f = new FileOutputStream("dispatch.class");
+			f.write(code);
+			f.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		Class<?> clazz = loader.define(className, code);
+		return loader.findMethod(clazz, methodName, dispatcherType);
+	}
+
 
 	// Debugging
 

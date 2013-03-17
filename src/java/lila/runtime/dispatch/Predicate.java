@@ -2,13 +2,11 @@ package lila.runtime.dispatch;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
-import lila.runtime.Evaluator;
 import lila.runtime.Compiler;
+import lila.runtime.Evaluator;
 
 
 public abstract class Predicate {
