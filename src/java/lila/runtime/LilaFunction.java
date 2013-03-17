@@ -16,8 +16,8 @@ public class LilaFunction extends LilaCallable {
 
 	private MethodHandle methodHandle;
 
-	public LilaFunction(MethodHandle methodHandle) {
-		super(lilaClass);
+	public LilaFunction(String name, MethodHandle methodHandle) {
+		super(lilaClass, name);
 		this.methodHandle = methodHandle;
 	}
 
@@ -28,7 +28,10 @@ public class LilaFunction extends LilaCallable {
 
 	@Override
 	public LilaFunction close(LilaObject value) {
-		LilaFunction function = new LilaFunction(this.methodHandle.bindTo(value));
+		MethodHandle boundMethodHandle =
+			this.methodHandle.bindTo(value);
+		LilaFunction function =
+			new LilaFunction(this.name, boundMethodHandle);
 		function.hasRest = this.hasRest;
 		return function;
 	}
@@ -46,11 +49,11 @@ public class LilaFunction extends LilaCallable {
 	static final Lookup lookup = MethodHandles.lookup();
 
 	static LilaFunction wrap
-		(Class<?> clazz, String name, MethodType type)
+		(Class<?> clazz, String name, MethodType type, String functionName)
 	{
 		try {
 			MethodHandle mh = lookup.findStatic(clazz, name, type);
-			return new LilaFunction(mh);
+			return new LilaFunction(functionName, mh);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -60,7 +63,7 @@ public class LilaFunction extends LilaCallable {
 	@Override
 	public String toString() {
 		// TODO: show type signature
-		return "#[Function]";
+		return String.format("#[Function %s]", this.name);
 	}
 
 	// call

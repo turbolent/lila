@@ -4,8 +4,11 @@ import java.lang.invoke.MutableCallSite;
 
 abstract class LilaCallable extends LilaObject {
 
-	public LilaCallable(LilaClass type) {
+	protected String name;
+
+	public LilaCallable(LilaClass type, String name) {
 		super(type);
+		this.name = name;
 	}
 
 	abstract LilaCallable close(LilaObject value);

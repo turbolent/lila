@@ -84,16 +84,16 @@ public class RT {
 	static Map<String,LilaFunction> FUNCTIONS = new HashMap<>();
 
 	public static void registerInternalFunction
-		(Class<?> clazz, String name, boolean hasRest,
+		(Class<?> clazz, String internalName, String name, boolean hasRest,
 		 Class<?> rtype, Class<?>... ptypes)
 		throws Throwable
 	{
 		MethodType type = methodType(rtype, ptypes);
 		// NOTE: no name decoding required, as it is not encoded
-		MethodHandle handle = lookup.findStatic(clazz, name, type);
-		LilaFunction function = new LilaFunction(handle);
+		MethodHandle handle = lookup.findStatic(clazz, internalName, type);
+		LilaFunction function = new LilaFunction(name, handle);
 		function.hasRest = hasRest;
-		FUNCTIONS.put(name, function);
+		FUNCTIONS.put(internalName, function);
 	}
 
 	public static CallSite bootstrapFunction

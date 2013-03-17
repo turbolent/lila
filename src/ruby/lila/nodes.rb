@@ -49,8 +49,7 @@ module Lila
     def interpret(interpreter)
       # create actual function
       function = interpreter.eval \
-        Function.new(self.parameter_list,
-                     self.expressions)
+        Function.new(self.name, self.parameter_list, self.expressions)
       # evaluate type expressions inside predicate
       self.predicate.resolveTypes { |expression|
         interpreter.eval expression
@@ -58,7 +57,7 @@ module Lila
       # add method to implicit generic function
       gf = RT.getValue self.name
       unless gf.instance_of? GenericFunction
-        gf = GenericFunction.new
+        gf = GenericFunction.new name
         RT.setValue self.name, gf
       end
       gf.addMethodHandle self.predicate, function.javaValue
@@ -70,9 +69,9 @@ module Lila
       gf.compileExpressions { |expression|
         unless gf.expression_method[expression]
           puts "Compiling predicate expression: #{expression}"
-          name = "__exp#{gf.expression_method.length + 1}"
-          result = interpreter.compiler.compile expression, interpreter.context,
-            name, sig do |builder|
+          method_name = "__exp#{gf.expression_method.length + 1}"
+          result = interpreter.compiler.compile expression,
+            interpreter.context, method_name, sig do |builder|
               expression.is_true builder
               builder.ireturn
             end
@@ -301,8 +300,9 @@ module Lila
   class Function < Expression
     attr_reader :parameter_list, :body
 
-    def initialize(parameter_list, body)
+    def initialize(name, parameter_list, body)
       super()
+      @name = name
       @parameter_list = parameter_list
       parameter_list.parameters.each { |parameter|
         parameter.function = self
@@ -341,7 +341,7 @@ module Lila
     end
 
     def compile(context, builder)
-      name = Context.new_function_name
+      internal_name = Context.new_function_name
 
       close context
 
@@ -352,22 +352,22 @@ module Lila
         param_type[-1] = LilaArray
       end
 
-      builder.class_builder.public_static_method name, [],
+      builder.class_builder.public_static_method internal_name, [],
         LilaObject, *param_type do |method|
-          @body.compile(context, method)
+          @body.compile context, method
           method.areturn
         end
 
       # ensure function is registered after class is loaded,
       # so bootstrap (lookup) will succeed
       function_type = [LilaObject] + param_type
-      context.register_internal_function name, function_type,
-        @parameter_list.rest
+      context.register_internal_function internal_name, @name,
+        function_type, @parameter_list.rest
 
       # link function value
       bootstrap = builder.h_invokestatic RT, 'bootstrapFunction',
         CallSite, Lookup, Java::java.lang.String, MethodType
-      encoded_name = StringNames.toBytecodeName(name)
+      encoded_name = StringNames.toBytecodeName internal_name
       builder.invokedynamic encoded_name, [LilaFunction], bootstrap
 
       unless @parameter_list.closed_parameters.empty?

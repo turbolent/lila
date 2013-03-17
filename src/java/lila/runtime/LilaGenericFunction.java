@@ -23,8 +23,8 @@ public class LilaGenericFunction extends LilaCallable {
 	List<LilaObject> closedArguments = Collections.emptyList();
 
 
-	public LilaGenericFunction() {
-		super(lilaClass);
+	public LilaGenericFunction(String name) {
+		super(lilaClass, name);
 	}
 
 
@@ -65,7 +65,7 @@ public class LilaGenericFunction extends LilaCallable {
 	//       override in GenericFunction subclass
 	//       defined inside interpreter
 	LilaGenericFunction copy() {
-		return new LilaGenericFunction();
+		return new LilaGenericFunction(this.name);
 	};
 
 	@Override
@@ -87,7 +87,7 @@ public class LilaGenericFunction extends LilaCallable {
 	@Override
 	public String toString() {
 		// TODO: show type signature
-		return "#[GenericFunction]";
+		return String.format("#[GenericFunction %s]", this.name);
 	}
 
 	@Override

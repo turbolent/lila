@@ -246,7 +246,7 @@ public class Test {
 		exp2.name = "e2";
 		//exp2.staticClasses = staticClasses;
 
-		LilaGenericFunction gf = new LilaGenericFunction();
+		LilaGenericFunction gf = new LilaGenericFunction(null);
 
 		// method 1
 		final Method m1 = new Method(null);
@@ -317,7 +317,7 @@ public class Test {
 			new OrPredicate(new TypePredicate(exp1, emptyNode),
 			                new TypePredicate(exp2, emptyNode));
 
-		LilaGenericFunction gf = new LilaGenericFunction();
+		LilaGenericFunction gf = new LilaGenericFunction(null);
 
 //		gf.inputExpressions = new ArrayList<Expression>() {{
 //			add(exp1);

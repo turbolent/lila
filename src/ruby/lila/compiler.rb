@@ -32,11 +32,11 @@ module Lila
       @functions = {}
     end
 
-    def register_internal_function(name, type, rest)
+    def register_internal_function(internal_name, name, type, rest)
       if @parent
-        @parent.register_internal_function name, type, rest
+        @parent.register_internal_function internal_name, name, type, rest
       else
-        @functions[name] = [type, rest]
+        @functions[internal_name] = [name, type, rest]
       end
     end
 
