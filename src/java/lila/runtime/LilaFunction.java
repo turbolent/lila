@@ -30,8 +30,8 @@ public class LilaFunction extends LilaCallable {
 		MethodHandle boundMethodHandle =
 			this.methodHandle.bindTo(value);
 		LilaFunction function =
-			new LilaFunction(this.name, boundMethodHandle);
-		function.hasRest = this.hasRest;
+			new LilaFunction(this.getName(), boundMethodHandle);
+		function.setVariadic(this.isVariadic());
 		return function;
 	}
 
@@ -62,11 +62,12 @@ public class LilaFunction extends LilaCallable {
 	@Override
 	public String toString() {
 		// TODO: show type signature
-		return String.format("#[Function %s]", this.name);
+		return String.format("#[Function %s]", this.getName());
 	}
 
 	// call
 
+	// check function of call-site inline cache entry to current call's function
 	public static boolean check(LilaFunction function, LilaObject fn) {
 		return fn == function;
 	}
@@ -74,23 +75,26 @@ public class LilaFunction extends LilaCallable {
 	private MethodHandle methodHandleForArguments
 		(LilaFunction function, int argumentCount)
 	{
-		MethodHandle mh = function.methodHandle;
-		int requiredParameterCount = mh.type().parameterCount();
-		if (function.hasRest)
+		MethodHandle handle = function.methodHandle;
+		int requiredParameterCount = handle.type().parameterCount();
+		if (function.isVariadic())
 			requiredParameterCount--;
 
-		// variable argument function?
-		if (argumentCount >= requiredParameterCount && function.hasRest) {
-			// create adapter boxing additional arguments array
+		// function variadic and additional arguments supplied?
+		if (function.isVariadic()
+			&& argumentCount >= requiredParameterCount )
+		{
+			// create adapter boxing the additional arguments array
 			int pos = requiredParameterCount;
-			mh = MethodHandles.filterArguments(mh, pos, boxAsArray);
+			handle = MethodHandles.filterArguments(handle, pos, boxAsArray);
 			// create adapter collecting additional arguments
 			int count = (argumentCount - requiredParameterCount);
-			mh = mh.asCollector(LilaObject[].class, count);
+			handle = handle.asCollector(LilaObject[].class, count);
 		}
-		return mh;
+		return handle;
 	}
 
+	// polymorphic inline cache chain limit
 	static final int maxCainCount = 2;
 
 	@Override
@@ -117,12 +121,15 @@ public class LilaFunction extends LilaCallable {
 		mhTest = mhTest.asType(mhTestType);
 
 		MethodHandle fallback;
+		// check if polymorphic inline cache chain limit is reached
 		if (callSite.chainCount > maxCainCount) {
+			// guard fallback is this default fallback
 			fallback = RT.fallback.bindTo(callSite)
 				// -1: function
 				.asCollector(LilaObject[].class, argumentCount);
 			callSite.chainCount = 0;
 		} else {
+			// set guard fallback to call site's current target
 			fallback = callSite.getTarget();
 			callSite.chainCount += 1;
 		}

@@ -150,8 +150,8 @@ class DAGBuilder {
 		// TODO: constructor?
 		this.gf = gf;
 		Set<Case> cases = new HashSet<>();
-		cases.addAll(gf.cases.values());
-		this.constraints = constraints(cases, gf.inputExpressions);
+		cases.addAll(gf.getCases());
+		this.constraints = constraints(cases, gf.getInputExpressions());
 		return buildSubDAG(cases, allExpressions(cases));
 	}
 

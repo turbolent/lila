@@ -149,7 +149,7 @@ public class Core {
 			exportFunction("random-argument", "randomArgument",
 			               methodType(LilaObject.class,
 			                          LilaObject.class, LilaArray.class));
-		randomArgument.hasRest = true;
+		randomArgument.setVariadic(true);
 	}
 
 	// make
@@ -182,7 +182,7 @@ public class Core {
 			exportFunction("make",
 			               methodType(LilaObject.class,
 			                          LilaClass.class, LilaArray.class));
-		make.hasRest = true;
+		make.setVariadic(true);
 	}
 
 
@@ -237,7 +237,7 @@ public class Core {
 			exportFunction("make-array", "makeArray",
 			               methodType(LilaArray.class,
 			                          LilaArray.class));
-		makeArray.hasRest = true;
+		makeArray.setVariadic(true);
 	}
 
 	// ==

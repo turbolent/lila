@@ -3,6 +3,7 @@ package lila.runtime;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,10 +20,16 @@ public class LilaGenericFunction extends LilaCallable {
 		              LilaObject.lilaClass);
 
 
-	public Map<Predicate,Case> cases = new HashMap<>();
-	List<LilaObject> closedArguments = Collections.emptyList();
+	private Map<Predicate,Case> cases = new HashMap<>();
 
-	public List<Expression> inputExpressions = Collections.emptyList();
+	private List<LilaObject> closedArguments = Collections.emptyList();
+
+	private List<Expression> inputExpressions = Collections.emptyList();
+
+	public Map<Expression,ExpressionInfo> expressionInfo = new HashMap<>();
+
+	// used by dispatch function
+	private List<Method> methods = new ArrayList<>();
 
 	public LilaGenericFunction(String name) {
 		super(lilaClass, name);
@@ -38,6 +45,21 @@ public class LilaGenericFunction extends LilaCallable {
 		this.inputExpressions = Arrays.asList(inputExpressions);
 	}
 
+	public Collection<Case> getCases() {
+		return this.cases.values();
+	}
+
+	public int getArity() {
+		return this.inputExpressions.size();
+	}
+
+	public List<Expression> getInputExpressions() {
+		return inputExpressions;
+	}
+
+	public List<Method> getMethods() {
+		return methods;
+	}
 
  	public void addMethodHandle(Predicate predicate, MethodHandle handle) {
 		addMethod(predicate, new Method(handle));
@@ -52,6 +74,8 @@ public class LilaGenericFunction extends LilaCallable {
 			}
 			c.methods.add(method);
 		}
+		if (!this.methods.contains(method))
+			this.methods.add(method);
 	}
 
 	void compileExpressions(Compiler compiler) {
@@ -60,11 +84,10 @@ public class LilaGenericFunction extends LilaCallable {
 		}
 	};
 
-	// TODO: rename;
-	//       override in GenericFunction subclass
-	//       defined inside interpreter
+	// TODO: rename; override in GenericFunction
+	//       subclass defined inside interpreter
 	LilaGenericFunction copy() {
-		return new LilaGenericFunction(this.name);
+		return null;
 	};
 
 	@Override
@@ -85,8 +108,7 @@ public class LilaGenericFunction extends LilaCallable {
 
 	@Override
 	public String toString() {
-		// TODO: show type signature
-		return String.format("#[GenericFunction %s]", this.name);
+		return String.format("#[GenericFunction %s]", this.getName());
 	}
 
 	@Override
@@ -114,4 +136,6 @@ public class LilaGenericFunction extends LilaCallable {
 		}
 		System.err.println("GF" + builder);
 	}
+
+
 }

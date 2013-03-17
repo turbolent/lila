@@ -318,12 +318,7 @@ public class Test {
 			new OrPredicate(new TypePredicate(exp1, emptyNode),
 			                new TypePredicate(exp2, emptyNode));
 
-		LilaGenericFunction gf = new LilaGenericFunction(null);
-
-//		gf.inputExpressions = new ArrayList<Expression>() {{
-//			add(exp1);
-//			add(exp2);
-//		}};
+		LilaGenericFunction gf = new LilaGenericFunction(null, exp1, exp2);
 
 		gf.addMethod(pred1, m1);
 		gf.addMethod(pred2, m2);

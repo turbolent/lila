@@ -84,7 +84,7 @@ public class RT {
 	static Map<String,LilaFunction> FUNCTIONS = new HashMap<>();
 
 	public static void registerInternalFunction
-		(Class<?> clazz, String internalName, String name, boolean hasRest,
+		(Class<?> clazz, String internalName, String name, boolean variadic,
 		 Class<?> rtype, Class<?>... ptypes)
 		throws Throwable
 	{
@@ -92,7 +92,7 @@ public class RT {
 		// NOTE: no name decoding required, as it is not encoded
 		MethodHandle handle = lookup.findStatic(clazz, internalName, type);
 		LilaFunction function = new LilaFunction(name, handle);
-		function.hasRest = hasRest;
+		function.setVariadic(variadic);
 		FUNCTIONS.put(internalName, function);
 	}
 
