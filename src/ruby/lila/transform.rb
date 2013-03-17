@@ -89,8 +89,8 @@ module Lila
          {:identifier => simple(:name),
           :parameter_list => simple(:parameter_list),
           :body => simple(:body)}) {
-      VariableDefinition.new(name.to_s,
-        Function.new(parameter_list, body))
+      function = Function.new name.to_s, parameter_list, body
+      VariableDefinition.new name.to_s, function
     }
 
     rule(:method_definition =>
@@ -207,8 +207,10 @@ module Lila
 
   module Macros
     def Macros.bind(name, value, body)
-      Call.new(Function.new(ParameterList.new([Parameter.new(name)]), body),
-               Arguments.new([value]))
+      parameters = ParameterList.new [Parameter.new(name)]
+      function = Function.new nil, parameters, body
+      arguments = Arguments.new [value]
+      Call.new function, arguments
     end
   end
 end
