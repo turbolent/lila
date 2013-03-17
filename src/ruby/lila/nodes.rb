@@ -85,8 +85,9 @@ module Lila
 
           interpreter.dump result
           clazz = interpreter.load result
-          handle = interpreter.loader.findMethod clazz, name, *sig
-          gf.expression_method[expression] = handle
+          java_sig = sig.map { |c| c.java_class }
+          handle = interpreter.loader.findMethod clazz,
+            method_name, *java_sig
         end
       }
 
