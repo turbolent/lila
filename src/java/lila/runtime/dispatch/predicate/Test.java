@@ -1,4 +1,4 @@
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 import java.lang.invoke.MethodHandle;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import lila.runtime.ExpressionEnvironment;
 import lila.runtime.ExpressionInfo;
 import lila.runtime.LilaClass;
 import lila.runtime.LilaFalse;
-import lila.runtime.LilaGenericFunction;
+import lila.runtime.LilaPredicateMethod;
 import lila.runtime.LilaObject;
 import lila.runtime.LilaTrue;
 import lila.runtime.RT;
@@ -208,7 +208,7 @@ public class Test {
 		exp5.name = "e2";
 		exp5.staticClasses = allClasses;
 
-		LilaGenericFunction gf = new LilaGenericFunction(null, exp1, exp5);
+		LilaPredicateMethod gf = new LilaPredicateMethod(null, exp1, exp5);
 
 		Predicate pred1 =
 			AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
@@ -327,7 +327,7 @@ public class Test {
 		exp2.name = "e2";
 		//exp2.staticClasses = staticClasses;
 
-		LilaGenericFunction gf = new LilaGenericFunction(null);
+		LilaPredicateMethod gf = new LilaPredicateMethod(null);
 
 		// method 1
 		final Method m1 = new Method(null);
@@ -398,7 +398,7 @@ public class Test {
 			new OrPredicate(new TypePredicate(exp1, emptyNode),
 			                new TypePredicate(exp2, emptyNode));
 
-		LilaGenericFunction gf = new LilaGenericFunction(null, exp1, exp2);
+		LilaPredicateMethod gf = new LilaPredicateMethod(null, exp1, exp2);
 
 		gf.addMethod(pred1, m1);
 		gf.addMethod(pred2, m2);

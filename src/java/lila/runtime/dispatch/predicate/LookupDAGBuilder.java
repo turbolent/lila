@@ -1,4 +1,4 @@
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 import static java.lang.invoke.MethodType.methodType;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
@@ -31,7 +31,7 @@ import org.objectweb.asm.Opcodes;
 import lila.runtime.DynamicClassLoader;
 import lila.runtime.Expression;
 import lila.runtime.LilaClass;
-import lila.runtime.LilaGenericFunction;
+import lila.runtime.LilaPredicateMethod;
 import lila.runtime.LilaObject;
 
 
@@ -54,7 +54,7 @@ class DAGBuilder {
 	private Method inapplicableMethod = inapplicable;
 	private Method ambiguousMethod = ambiguous;
 
-	LilaGenericFunction gf;
+	LilaPredicateMethod gf;
 
 	public DAGBuilder(Set<LilaClass> allClasses) {
 		this.allClasses = allClasses;
@@ -147,7 +147,7 @@ class DAGBuilder {
 	Map<Method,LookupDAGLeafNode> leafNodes = new HashMap<>();
 
 
-	LookupDAGNode buildLookupDAG(LilaGenericFunction gf) {
+	LookupDAGNode buildLookupDAG(LilaPredicateMethod gf) {
 		// TODO: constructor?
 		this.gf = gf;
 		Set<Case> cases = new HashSet<>();
@@ -344,7 +344,7 @@ class DAGBuilder {
 		int totalArgumentCount = argumentCount + 1;
 		Class<?>[] parameterTypes = new Class<?>[totalArgumentCount];
 		// +1: function is first argument
-		parameterTypes[0] = LilaGenericFunction.class;
+		parameterTypes[0] = LilaPredicateMethod.class;
 
 	    // set types of actual arguments
 		for (int argument = 1; argument < totalArgumentCount; argument++)
@@ -367,7 +367,7 @@ class DAGBuilder {
 
 		// load GF's method list
 		String lilaGenericFunctionClassName =
-			LilaGenericFunction.class.getName().replace('.', '/');
+			LilaPredicateMethod.class.getName().replace('.', '/');
 		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
 		                   lilaGenericFunctionClassName, "getMethods",
 		                   methodType(List.class)

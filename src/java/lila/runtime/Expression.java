@@ -2,7 +2,7 @@ package lila.runtime;
 
 import java.util.Set;
 
-import lila.runtime.dispatch.PredicateEnvironment;
+import lila.runtime.dispatch.predicate.PredicateEnvironment;
 
 public abstract class Expression {
 

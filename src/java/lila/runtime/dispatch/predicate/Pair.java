@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 /**
  * Generic pair.

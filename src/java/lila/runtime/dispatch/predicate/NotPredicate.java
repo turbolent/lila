@@ -1,4 +1,4 @@
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 import lila.runtime.Evaluator;
 import lila.runtime.Compiler;

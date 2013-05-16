@@ -1,11 +1,11 @@
 require 'lila/nodes'
 
-java_import 'lila.runtime.dispatch.TestPredicate'
-java_import 'lila.runtime.dispatch.NotPredicate'
-java_import 'lila.runtime.dispatch.AndPredicate'
-java_import 'lila.runtime.dispatch.OrPredicate'
-java_import 'lila.runtime.dispatch.TypePredicate'
-java_import 'lila.runtime.dispatch.BindingPredicate'
+java_import 'lila.runtime.dispatch.predicate.TestPredicate'
+java_import 'lila.runtime.dispatch.predicate.NotPredicate'
+java_import 'lila.runtime.dispatch.predicate.AndPredicate'
+java_import 'lila.runtime.dispatch.predicate.OrPredicate'
+java_import 'lila.runtime.dispatch.predicate.TypePredicate'
+java_import 'lila.runtime.dispatch.predicate.BindingPredicate'
 
 
 module Lila

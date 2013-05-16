@@ -1,4 +1,4 @@
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 import java.util.Collections;
 import java.util.HashSet;

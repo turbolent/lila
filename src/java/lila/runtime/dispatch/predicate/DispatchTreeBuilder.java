@@ -1,4 +1,4 @@
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 import static java.lang.invoke.MethodType.methodType;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;

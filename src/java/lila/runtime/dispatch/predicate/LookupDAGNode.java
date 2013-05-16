@@ -1,4 +1,4 @@
-package lila.runtime.dispatch;
+package lila.runtime.dispatch.predicate;
 
 import static java.lang.invoke.MethodType.methodType;
 
@@ -16,7 +16,7 @@ import lila.runtime.Expression;
 import lila.runtime.ExpressionEnvironment;
 import lila.runtime.ExpressionInfo;
 import lila.runtime.LilaClass;
-import lila.runtime.LilaGenericFunction;
+import lila.runtime.LilaPredicateMethod;
 import lila.runtime.LilaObject;
 
 import org.objectweb.asm.MethodVisitor;
@@ -26,9 +26,9 @@ import org.objectweb.asm.Opcodes;
 
 abstract class LookupDAGNode {
 
-	protected LilaGenericFunction gf;
+	protected LilaPredicateMethod gf;
 
-	public LookupDAGNode(LilaGenericFunction gf) {
+	public LookupDAGNode(LilaPredicateMethod gf) {
 		this.gf = gf;
 	}
 
@@ -75,7 +75,7 @@ class LookupDAGEdge {
 class LookupDAGInteriorNode extends LookupDAGNode {
 
 	public LookupDAGInteriorNode
-		(LilaGenericFunction gf, Expression expression)
+		(LilaPredicateMethod gf, Expression expression)
 	{
 		super(gf);
 		this.expression = expression;
@@ -186,7 +186,7 @@ class LookupDAGInteriorNode extends LookupDAGNode {
 class LookupDAGLeafNode extends LookupDAGNode {
 	Method method;
 
-	public LookupDAGLeafNode(LilaGenericFunction gf, Method method) {
+	public LookupDAGLeafNode(LilaPredicateMethod gf, Method method) {
 		super(gf);
 		this.method = method;
 	}
