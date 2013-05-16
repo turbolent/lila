@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'bitescript'
 
 java_import 'lila.runtime.LilaObject'

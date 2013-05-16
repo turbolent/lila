@@ -8,7 +8,6 @@ java_import 'lila.runtime.RT'
 java_import 'lila.runtime.Core'
 java_import 'lila.runtime.LilaObject'
 java_import 'lila.runtime.LilaClass'
-java_import 'lila.runtime.dispatch.Utils'
 
 
 module Lila
