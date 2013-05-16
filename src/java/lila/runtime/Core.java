@@ -39,7 +39,7 @@ public class Core {
 		exportClass(LilaFalse.lilaClass);
 		exportClass(LilaTrue.lilaClass);
 		exportClass(LilaFunction.lilaClass);
-		exportClass(LilaGenericFunction.lilaClass);
+		exportClass(LilaPredicateMethod.lilaClass);
 		exportClass(LilaInteger.lilaClass);
 		exportClass(LilaString.lilaClass);
 	}
@@ -255,14 +255,14 @@ public class Core {
 	// apply
 
 	// TODO: make generic for LilaCallable
-	static LilaObject apply(LilaFunction function, LilaArray arguments) {
-		return function.apply(arguments.array);
+	static LilaObject apply(LilaCallable callable, LilaArray arguments) {
+		return callable.apply(arguments.array);
 	}
 
 	static {
 		exportFunction("apply",
 		               methodType(LilaObject.class,
-		                          LilaFunction.class, LilaArray.class));
+		                          LilaCallable.class, LilaArray.class));
 	}
 
 	// get
