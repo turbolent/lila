@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'parslet'
 require 'lila/transform'
 require 'pp'
@@ -24,29 +25,33 @@ module Lila
 
     rule(:definition) {
       (function_definition |
-        method_definition |
+        multi_method_definition |
+        predicate_method_definition |
         class_definition |
         variable_definition)
     }
 
     rule(:function_definition) {
-      (kDEFINE >> kFUNCTION >>
-        identifier >>
+      (kDEFN >> identifier >>
         parameter_list.as(:parameter_list) >>
         body.as(:body)).as(:function_definition)
     }
 
-    rule(:method_definition) {
-      (kDEFINE >> kMETHOD >>
-        identifier >>
+    rule(:multi_method_definition) {
+      (kDEFMM >> identifier >>
+        parameter_list.as(:parameter_list) >>
+        body.as(:body)).as(:multi_method_definition)
+    }
+
+    rule(:predicate_method_definition) {
+      (kDEFPM >> identifier >>
         parameter_list.as(:parameter_list) >>
         kWHEN >> predicate.as(:predicate) >>
-        body.as(:body)).as(:method_definition)
+        body.as(:body)).as(:predicate_method_definition)
     }
 
     rule(:class_definition) {
-      (kDEFINE >> kCLASS >>
-        identifier >>
+      (kDEFCLASS >> identifier >>
         superclasses.as(:superclasses) >>
         properties.maybe).as(:class_definition)
     }
@@ -71,7 +76,7 @@ module Lila
     }
 
     rule(:variable_definition) {
-      kDEFINE >> identifier >>
+      kDEF >> identifier >>
         tEQUALS >> expression.as(:value)
     }
 
@@ -194,8 +199,7 @@ module Lila
     }
 
     rule(:function) {
-      (kFUNCTION >>
-        parameter_list.as(:parameter_list) >>
+      (kFN >> parameter_list.as(:parameter_list) >>
         body.as(:body))
     }
 
@@ -312,7 +316,7 @@ module Lila
       end
     end
 
-    keywords :class, :function, :method, :define, :if, :else,
-             :let, :while, :when, :not, :test
+    keywords :fn, :def, :defclass, :defn, :defmm, :defpm,
+      :if, :else, :let, :while, :when, :not, :test
   end
 end

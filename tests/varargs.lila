@@ -7,7 +7,7 @@ make-array(1, 2, 3);
 make-array();
 
 
-define function get-rest (a ... other) {
+defn get-rest (a ... other) {
   other
 };
 

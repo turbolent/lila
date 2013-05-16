@@ -1,12 +1,12 @@
 
-define foo = 100;
+def foo = 100;
 
 // calls
 
 +(1, 2);
 
 
-print(as-string((function (a, b) { b })(1, 2))); 
+print(as-string((fn (a, b) { b })(1, 2)));
 
 
 // bindings
@@ -14,9 +14,9 @@ print(as-string((function (a, b) { b })(1, 2)));
 let x = 23 { "FOO"; x };
 print(let x = "bindings work" { print("ok"); x });
 
-define function printer (first) {
-  function (second) {
-    function (third) {
+defn printer (first) {
+  fn (second) {
+    fn (third) {
       print(first);
       print(second);
       print(third);
@@ -29,30 +29,30 @@ printer("a")("b")("c");
 
 // closures
 
-define function adder (a) {
-  function (b) {
+defn adder (a) {
+  fn (b) {
     +(a, b);
   }
 };
 
-define add23 = adder(23);
+def add23 = adder(23);
 
 print(as-string(add23(42)));
 
 
-(function (x) {
+(fn (x) {
   x;
-  (function (y) {
+  (fn (y) {
     y;
     +(x, y)
    })(42)
 })(23);
 
-(function (x) {
+(fn (x) {
   x;
-  (function (z) {
+  (fn (z) {
     z;
-    (function (y) {
+    (fn (y) {
       y;
       +(x, y)
      })(42)
@@ -82,7 +82,7 @@ if (1) { 1 } else { (2, 3) };
 let counter = make(<object>) {
   set!(counter, "i", 0);
   while <(get(counter, "i"), 10) {
-    print("x"); 
+    print("x");
     inc!(counter, "i");
   }
 };

@@ -15,7 +15,8 @@ java_import 'lila.runtime.StringNames'
 java_import 'lila.runtime.Expression' do
   'InternalExpression'
 end
-java_import 'lila.runtime.LilaGenericFunction'
+java_import 'lila.runtime.LilaMultiMethod'
+java_import 'lila.runtime.LilaPredicateMethod'
 java_import 'lila.runtime.ExpressionInfo'
 
 
@@ -37,7 +38,7 @@ module Lila
 
   # subclassed to hold additional data used
   # during compilation of predicate expressions
-  class GenericFunction < LilaGenericFunction
+  class PredicateMethod < LilaPredicateMethod
     attr_reader :expression_method
 
     def initialize(name)
@@ -52,7 +53,42 @@ module Lila
     # TODO: copy function
   end
 
-  class MethodDefinition < Struct.new \
+  class MultiMethodDefinition < Struct.new \
+    :name, :parameter_list, :expressions
+
+
+    def interpret(interpreter)
+      # create actual function
+      function = interpreter.eval \
+        Function.new(self.name, self.parameter_list, self.expressions)
+      # evaluate specializer expressions
+      required = self.parameter_list.parameters
+      if self.parameter_list.rest
+        required = required[0...-1]
+      end
+      arity = required.length
+      specializers = required.map { |parameter|
+        if parameter.type
+          interpreter.eval parameter.type
+        else
+          LilaObject.lilaClass
+        end
+      }.to_java LilaClass
+      # add method to implicit generic function
+      mm = RT.getValue self.name
+      unless mm.instance_of? LilaMultiMethod
+        mm = LilaMultiMethod.new name, arity
+        RT.setValue self.name, mm
+      end
+      mm.setVariadic self.parameter_list.rest
+      # add method
+      mm.addMethod specializers, function.javaValue
+      puts mm
+    end
+  end
+
+
+  class PredicateMethodDefinition < Struct.new \
     :name, :parameter_list, :predicate, :expressions
 
     def interpret(interpreter)
@@ -64,21 +100,21 @@ module Lila
         interpreter.eval expression
       }
       # add method to implicit generic function
-      gf = RT.getValue self.name
-      unless gf.instance_of? GenericFunction
-        gf = GenericFunction.new name
-        RT.setValue self.name, gf
+      pm = RT.getValue self.name
+      unless pm.instance_of? PredicateMethod
+        pm = PredicateMethod.new name
+        RT.setValue self.name, pm
       end
-      gf.addMethodHandle self.predicate, function.javaValue
-      gf.dumpMethods
+      pm.addMethodHandle self.predicate, function.javaValue
+      pm.dumpMethods
       # create dispatch function
 
       # compile each expression inside DF conjunctions once
       sig = [Java::boolean] + [LilaObject] * self.parameter_list.length
-      gf.compileExpressions { |expression|
-        unless gf.expression_method[expression]
+      pm.compileExpressions { |expression|
+        unless pm.expression_method[expression]
           puts "Compiling predicate expression: #{expression}"
-          method_name = "__exp#{gf.expression_method.length + 1}"
+          method_name = "__exp#{pm.expression_method.length + 1}"
           result = interpreter.compiler.compile expression,
             interpreter.context, method_name, sig do |builder|
               expression.is_true builder
@@ -90,14 +126,14 @@ module Lila
           java_sig = sig.map { |c| c.java_class }
           handle = interpreter.loader.findMethod clazz,
             method_name, *java_sig
-          gf.expression_info[expression] =
+          pm.expression_info[expression] =
             ExpressionInfo.new clazz.java_class.name, method_name, handle
         end
       }
 
-      puts gf.expression_method
+      puts pm.expression_method
 
-      puts gf
+      puts pm
     end
   end
 

@@ -5,7 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class LilaClass extends LilaObject {
+public class LilaClass
+	extends LilaObject
+	implements Comparable<LilaClass>
+{
 
 	// see static initialization in LilaObject
 	public static LilaClass lilaClass;
@@ -76,6 +79,11 @@ public class LilaClass extends LilaObject {
 			superclasses = new LilaClass[] { LilaObject.lilaClass };
 		LilaClass result = new LilaClass(false, name, null, superclasses);
 		result.classProperties = properties;
+
+		// update all multi-methods
+		for (LilaMultiMethod mm : LilaMultiMethod.getInstances())
+			mm.addClass(result);
+
 		return result;
 	}
 
@@ -136,6 +144,16 @@ public class LilaClass extends LilaObject {
 	public String toString() {
 		String name = (this.name == null ? "" : " " + this.name);
 		return "#[Class" + name + "]";
+	}
+
+	@Override
+	public int compareTo(LilaClass other) {
+		if (this == other)
+			return 0;
+		else if (this.isSubtypeOf(other))
+			return -1;
+		else
+			return 1;
 	}
 
 }

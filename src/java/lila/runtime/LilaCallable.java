@@ -2,7 +2,7 @@ package lila.runtime;
 
 abstract class LilaCallable extends LilaObject {
 
-	private String name;
+	protected String name;
 	private boolean variadic = false;
 
 	public LilaCallable(LilaClass type, String name) {

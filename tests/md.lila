@@ -1,0 +1,31 @@
+defclass <a> (<object>);
+defclass <b> (<a>);
+defclass <c> (<b>);
+
+defmm foo (x :: <a>, y :: <a>) { 1 };
+defmm foo (x :: <b>, y :: <b>) { 2 };
+defmm foo (x :: <a>, y :: <c>) { 3 };
+defmm foo (x :: <b>, y :: <c>) { 4 };
+
+def a = make(<a>);
+def b = make(<b>);
+def c = make(<c>);
+
+foo(a, c);
+foo(b, b);
+foo(a, a);
+foo(c, b);
+foo(b, a);
+foo(b, c);
+
+defclass <d> (<c>);
+def d = make(<d>);
+foo(a, d);
+
+defmm bar (x :: <a>, y :: <a> ... rest) { make-array(1, rest) };
+defmm bar (x :: <b>, y :: <b> ... rest) { make-array(2, rest) };
+
+bar(a, b, 3, 4, 5);
+bar(b, b, 7, 8, 9);
+
+apply(bar, make-array(a, b, 1, 2, 3));

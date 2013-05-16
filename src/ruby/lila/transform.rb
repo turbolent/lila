@@ -93,12 +93,19 @@ module Lila
       VariableDefinition.new name.to_s, function
     }
 
-    rule(:method_definition =>
+    rule(:multi_method_definition =>
+         {:identifier => simple(:name),
+          :parameter_list => simple(:parameter_list),
+          :body => simple(:body)}) {
+      MultiMethodDefinition.new name.to_s, parameter_list, body
+    }
+
+    rule(:predicate_method_definition =>
          {:identifier => simple(:name),
           :parameter_list => simple(:parameter_list),
           :predicate => simple(:predicate),
           :body => simple(:body)}) {
-      MethodDefinition.new name.to_s, parameter_list, predicate, body
+      PredicateMethodDefinition.new name.to_s, parameter_list, predicate, body
     }
 
     rule(:class_definition =>

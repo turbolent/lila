@@ -1,56 +1,56 @@
-define method factorial (n)
+defpm factorial (n)
   when test <(n, 0)
 {
   false
 };
 
-define method factorial (n) 
-  when test ==(n, 0) 
+defpm factorial (n)
+  when test ==(n, 0)
 {
   0
 };
 
-define method factorial (n)
+defpm factorial (n)
   when test >(n, 0)
 {
   *(n, factorial(-(n, 1)))
 };
 
-define method foo ()
+defpm foo ()
   when (b := a)
-        && (test (function (a, b) { b }))
+        && (test (fn (a, b) { b }))
 {
   false
 };
 
 
-define method foo2 ()
-  when (a := 1) 
+defpm foo2 ()
+  when (a := 1)
        && (test (let a = a {"a"; a }))
 {
   false
 };
 
-define method foo3 ()
+defpm foo3 ()
   when (a := n)
        && (test (if (a) { c; a } else { b; a }))
 {
   false
 };
 
-define method bar ()
+defpm bar ()
   when (x := 1) && (n :: <integer>) && ((n :: <string>) || (not test n))
 {
   false
 };
 
-define method bar2 ()
-  when (test (function (a, b) { b })) && (test (function (a, b) { b }))
+defpm bar2 ()
+  when (test (fn (a, b) { b })) && (test (fn (a, b) { b }))
 {
   false
 };
 
-define method bar3 ()
+defpm bar3 ()
   when (test if (a) { a; b } else {2; 3} ) && (test if (a) { a; b } else {2; 3})
 {
   false

@@ -9,14 +9,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lila.runtime.dispatch.Case;
-import lila.runtime.dispatch.Method;
-import lila.runtime.dispatch.Predicate;
+import lila.runtime.dispatch.predicate.Case;
+import lila.runtime.dispatch.predicate.Method;
+import lila.runtime.dispatch.predicate.Predicate;
 
-public class LilaGenericFunction extends LilaCallable {
+public class LilaPredicateMethod extends LilaCallable {
 
 	public static final LilaClass lilaClass =
-		new LilaClass(true, "<generic-function>", LilaGenericFunction.class,
+		new LilaClass(true, "<predicate-method>", LilaPredicateMethod.class,
 		              LilaObject.lilaClass);
 
 
@@ -31,11 +31,11 @@ public class LilaGenericFunction extends LilaCallable {
 	// used by dispatch function
 	private List<Method> methods = new ArrayList<>();
 
-	public LilaGenericFunction(String name) {
+	public LilaPredicateMethod(String name) {
 		super(lilaClass, name);
 	}
 
-	public LilaGenericFunction(String name, Expression... inputExpressions) {
+	public LilaPredicateMethod(String name, Expression... inputExpressions) {
 		this(name);
 		// TODO: remove, debugging
 		int cost = 0;
@@ -84,15 +84,15 @@ public class LilaGenericFunction extends LilaCallable {
 		}
 	};
 
-	// TODO: rename; override in GenericFunction
+	// TODO: rename; override in PredicateMethod
 	//       subclass defined inside interpreter
-	LilaGenericFunction copy() {
+	LilaPredicateMethod copy() {
 		return null;
 	};
 
 	@Override
-	public LilaGenericFunction close(LilaObject value) {
-		LilaGenericFunction gf = copy();
+	public LilaPredicateMethod close(LilaObject value) {
+		LilaPredicateMethod gf = copy();
 		gf.closedArguments = new ArrayList<LilaObject>();
 		gf.closedArguments.addAll(this.closedArguments);
 		gf.closedArguments.add(value);
@@ -108,7 +108,7 @@ public class LilaGenericFunction extends LilaCallable {
 
 	@Override
 	public String toString() {
-		return String.format("#[GenericFunction %s]", this.getName());
+		return String.format("#[PredicateMethod %s]", this.getName());
 	}
 
 	@Override
@@ -117,7 +117,7 @@ public class LilaGenericFunction extends LilaCallable {
 		throws Throwable
 	{
 		// TODO:
-		System.out.println("GF CALL");
+		System.out.println("PREDICATE METHOD CALL");
 		return null;
 	}
 

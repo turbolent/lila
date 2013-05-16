@@ -1,9 +1,9 @@
 // Y combinator
 
-define function Y (f) {
-  ((function (x) { x(x) })
-   (function (y) {
-      f(function (... rest) {
+defn Y (f) {
+  ((fn (x) { x(x) })
+   (fn (y) {
+      f(fn (... rest) {
           apply(y(y), rest)
         })
     }))
@@ -11,8 +11,8 @@ define function Y (f) {
 
 // fib using Y
 
-define fibY = Y(function (f) {
-  function (n) {
+def fibY = Y(fn (f) {
+  fn (n) {
     if <(n, 2) {
       n
     } else {
@@ -26,8 +26,8 @@ fibY(23);
 
 // loop using Y
 
-Y(function (f) {
-    function (x) {
+Y(fn (f) {
+    fn (x) {
       print(as-string(x));
       if (<(x, 10)) {
         f(+(x, 1))

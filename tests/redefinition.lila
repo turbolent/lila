@@ -1,12 +1,12 @@
-define x = 1;
+def x = 1;
 
-define function get-x () {
+defn get-x () {
   x;
 };
 
 assert(==(get-x(), 1));
 
-define x = 2;
+def x = 2;
 
 assert(==(get-x(), 2));
 

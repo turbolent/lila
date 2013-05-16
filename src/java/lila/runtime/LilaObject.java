@@ -51,4 +51,9 @@ public class LilaObject {
 	public static LilaObject make() {
 		return new LilaObject(lilaClass);
 	}
+
+	@Override
+	public String toString() {
+		return String.format("#[Object %s]", this.type);
+	}
 }

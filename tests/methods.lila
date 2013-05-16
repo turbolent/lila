@@ -1,14 +1,14 @@
 // methods
 
-define method test (x :: <object>) {
+defmm test (x :: <object>) {
   1
 };
 
-define method test (x :: <string>) {
+defmm test (x :: <string>) {
   2
-}; 
+};
 
-define method test (x :: <boolean>) {
+defmm test (x :: <boolean>) {
   3
 };
 

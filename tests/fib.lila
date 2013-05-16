@@ -1,6 +1,6 @@
 // fib
 
-define function fib (n) {
+defn fib (n) {
   if <(n, 2) {
     n
   } else {
@@ -10,7 +10,7 @@ define function fib (n) {
 };
 
 let start = time() {
-  print(as-string(fib(35)));
+  print(as-string(fib(45)));
   let end = time() {
     -(end, start)
   }

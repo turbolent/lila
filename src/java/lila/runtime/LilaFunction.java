@@ -82,11 +82,11 @@ public class LilaFunction extends LilaCallable {
 
 		// function variadic and additional arguments supplied?
 		if (function.isVariadic()
-			&& argumentCount >= requiredParameterCount )
+			&& argumentCount >= requiredParameterCount)
 		{
 			// create adapter boxing the additional arguments array
 			int pos = requiredParameterCount;
-			handle = MethodHandles.filterArguments(handle, pos, boxAsArray);
+			handle = MethodHandles.filterArguments(handle, pos, RT.boxAsArray);
 			// create adapter collecting additional arguments
 			int count = (argumentCount - requiredParameterCount);
 			handle = handle.asCollector(LilaObject[].class, count);
@@ -95,7 +95,7 @@ public class LilaFunction extends LilaCallable {
 	}
 
 	// polymorphic inline cache chain limit
-	static final int maxCainCount = 2;
+	static final int maxCainCount = 3;
 
 	@Override
 	public LilaObject fallback
@@ -142,17 +142,12 @@ public class LilaFunction extends LilaCallable {
 	}
 
 	private static final MethodHandle check;
-	private static MethodHandle boxAsArray;
 	static {
 		try {
 			check = lookup
 				.findStatic(LilaFunction.class, "check",
 				            methodType(boolean.class,
 				                       LilaFunction.class, LilaObject.class));
-			boxAsArray = lookup
-				.findConstructor(LilaArray.class,
-				                 methodType(void.class,
-				                            LilaObject[].class));
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }

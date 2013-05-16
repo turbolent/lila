@@ -132,12 +132,16 @@ public class RT {
     }
 
 	static final MethodHandle fallback;
+	static MethodHandle boxAsArray;
 	static {
 		try {
 			MethodType fallbackType =
 				methodType(LilaObject.class,
 	                       LilaCallSite.class, LilaObject.class, LilaObject[].class);
 			fallback = lookup.findStatic(RT.class, "fallback", fallbackType);
+			boxAsArray = lookup
+				.findConstructor(LilaArray.class,
+				                 methodType(void.class, LilaObject[].class));
 	    } catch (ReflectiveOperationException e) {
 	    	throw (AssertionError)new AssertionError().initCause(e);
 	    }

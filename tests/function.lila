@@ -1,0 +1,64 @@
++;
+
+inc!;
+
+defn a (x) {
+  x
+};
+
+defn b (x) {
+  x
+};
+
+defn c (x) {
+  x
+};
+
+defn d (x) {
+  x
+};
+
+defn call (f) {
+  f(23);
+};
+
+// a
+let counter = make(<object>) {
+  set!(counter, "i", 0);
+  while <(get(counter, "i"), 1000) {
+    call(a);
+    inc!(counter, "i");
+  };
+};
+// b
+let counter = make(<object>) {
+  set!(counter, "i", 0);
+  while <(get(counter, "i"), 2000) {
+    call(b);
+    inc!(counter, "i");
+  };
+};
+// c
+let counter = make(<object>) {
+  set!(counter, "i", 0);
+  while <(get(counter, "i"), 1500) {
+    call(c);
+    inc!(counter, "i");
+  };
+};
+// b again
+let counter = make(<object>) {
+  set!(counter, "i", 0);
+  while <(get(counter, "i"), 2000) {
+    call(b);
+    inc!(counter, "i");
+  };
+};
+// d should trigger rebind
+let counter = make(<object>) {
+  set!(counter, "i", 0);
+  while <(get(counter, "i"), 2000) {
+    call(d);
+    inc!(counter, "i");
+  };
+};

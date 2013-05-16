@@ -7,14 +7,14 @@
 
 // define class
 
-define class <foo> (<object>);
+defclass <foo> (<object>);
 
 let x = make(<foo>) {
   print(as-string(object-class(x)));
   x;
 };
 
-define class <bar> (<foo>);
+defclass <bar> (<foo>);
 
 // subtyping tests
 
@@ -25,15 +25,15 @@ assert(not(subtype?(<foo>, <bar>)));
 
 // multiple inheritance
 
-define class <blub> (<foo>);
-define class <baz> (<bar>, <blub>);
+defclass <blub> (<foo>);
+defclass <baz> (<bar>, <blub>);
 
 assert(subtype?(<baz>, <foo>));
 assert(subtype?(<baz>, <bar>));
 
 // use make to create a class
 
-define <baz2> = make(<class>, "<baz2>", make-array(<bar>, <blub>));
+def <baz2> = make(<class>, "<baz2>", make-array(<bar>, <blub>));
 
 assert(subtype?(<baz2>, <foo>));
 assert(subtype?(<baz2>, <bar>));
@@ -58,13 +58,13 @@ assert(not(instance?(true, <false>)));
 
 // properties
 
-define class <xyz> (<object>) {
+defclass <xyz> (<object>) {
   a;
   b
 };
 
 let xyz = make(<xyz>, 1, 2) {
-  assert(==(get(xyz, "a"), 1));  
+  assert(==(get(xyz, "a"), 1));
   assert(==(get(xyz, "b"), 2));
   set!(xyz, "a", 3);
   assert(==(get(xyz, "a"), 3));
