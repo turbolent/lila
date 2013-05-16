@@ -72,7 +72,7 @@ public class LilaFunction extends LilaCallable {
 		return fn == function;
 	}
 
-	private MethodHandle methodHandleForArguments
+	static MethodHandle methodHandleForArguments
 		(LilaFunction function, int argumentCount)
 	{
 		MethodHandle handle = function.methodHandle;

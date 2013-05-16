@@ -56,17 +56,20 @@ module Lila
   class MultiMethodDefinition < Struct.new \
     :name, :parameter_list, :expressions
 
-
     def interpret(interpreter)
+      required = self.parameter_list.parameters.dup
+      if self.parameter_list.rest
+        required.pop
+      end
+      arity = required.length
+      # add next-method parameter
+      next_method = Parameter.new 'next-method'
+      self.parameter_list.parameters.unshift next_method
       # create actual function
       function = interpreter.eval \
         Function.new(self.name, self.parameter_list, self.expressions)
       # evaluate specializer expressions
-      required = self.parameter_list.parameters
-      if self.parameter_list.rest
-        required = required[0...-1]
-      end
-      arity = required.length
+
       specializers = required.map { |parameter|
         if parameter.type
           interpreter.eval parameter.type

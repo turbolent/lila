@@ -19,7 +19,7 @@ public class SRPDispatcher {
 		ArrayList<Method> allMethods = new ArrayList<>();
 		Collections.addAll(allMethods, methods);
 		Collections.sort(allMethods);
-				
+
 		ArrayList<ArrayList<BitSet>> tables = new ArrayList<>();
 		for (int i = 0; i < arity; i++) {
 			ArrayList<BitSet> table = new ArrayList<>();
@@ -27,7 +27,7 @@ public class SRPDispatcher {
 			for (int j = 0; j < allClasses.size(); j++)
 				table.add(null);
 			tables.add(table);
-			
+
 			int j = 0;
 			for (Method method : allMethods)
 				addMethod(table, method.getSpecializer(i), j++);
@@ -38,13 +38,13 @@ public class SRPDispatcher {
 	}
 
 	static MethodHandle[] noMethods = new MethodHandle[0];
-	
+
 	public MethodHandle[] dispatch(LilaClass... types) {
 		int identifier = types[0].getIdentifier();
 		BitSet set = tables.get(0).get(identifier);
 		if (set == null)
 			return noMethods;
-		set = (BitSet)set.clone(); 
+		set = (BitSet)set.clone();
 		for (int i = 1; i < types.length; i++) {
 			int otherIdentifier = types[i].getIdentifier();
 			BitSet otherSet = tables.get(i).get(otherIdentifier);
@@ -60,7 +60,7 @@ public class SRPDispatcher {
 	}
 
 	private void addMethod
-		(List<BitSet> table, LilaClass specializer, int pos) 
+		(List<BitSet> table, LilaClass specializer, int pos)
 	{
 		for (LilaClass subtype : specializer.getAllSubclasses()) {
 			BitSet bitset = table.get(subtype.getIdentifier());
@@ -71,16 +71,16 @@ public class SRPDispatcher {
 			bitset.set(pos);
 		}
 	}
-	
+
 	public void addNewMethod(Method method) {
 		int index = Collections.binarySearch(methods, method);
 		if (index < 0) index = ~index;
-		
+
 		methods.add(index, method);
-			
+
 		for (int i = 0; i < tables.size(); i++) {
 			ArrayList<BitSet> table = tables.get(i);
-			
+
 			// shift all sets in table
 			for (BitSet bitset : table) {
 				if (bitset == null)
@@ -90,16 +90,16 @@ public class SRPDispatcher {
 				bitset.set(index, false);
 			}
 
-			this.addMethod(table, method.getSpecializer(i), index);	
+			this.addMethod(table, method.getSpecializer(i), index);
 		}
 	}
-	
+
 	public void addNewClass(LilaClass type) {
 		// add new type entry to each table
 		for (int i = 0; i < tables.size(); i++) {
 			ArrayList<BitSet> table = tables.get(i);
 			table.add(type.getIdentifier(), null);
-		
+
 			// add methods if applicable
 			int j = 0;
 			for (Method method : this.methods) {

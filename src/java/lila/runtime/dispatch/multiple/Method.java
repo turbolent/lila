@@ -9,21 +9,21 @@ public class Method implements Comparable<Method> {
 	private MethodHandle methodHandle;
 	private int arity;
 
-	
+
 	public Method(LilaClass[] specializers, MethodHandle methodHandle) {
 		this.specializers = specializers;
 		this.methodHandle = methodHandle;
 		this.arity = specializers.length;
 	}
-	
+
 	public MethodHandle getMethodHandle() {
 		return methodHandle;
 	}
-	
+
 	public LilaClass getSpecializer(int i) {
 		return this.specializers[i];
 	}
-	
+
 	@Override
 	public int compareTo(Method other) {
 		int state = 0;
@@ -37,5 +37,5 @@ public class Method implements Comparable<Method> {
 				state = cmp;
 		}
 		return state;
-	}	
+	}
 }

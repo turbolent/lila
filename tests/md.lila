@@ -18,9 +18,13 @@ foo(c, b);
 foo(b, a);
 foo(b, c);
 
+// new class
+
 defclass <d> (<c>);
 def d = make(<d>);
 foo(a, d);
+
+// varargs
 
 defmm bar (x :: <a>, y :: <a> ... rest) { make-array(1, rest) };
 defmm bar (x :: <b>, y :: <b> ... rest) { make-array(2, rest) };
@@ -28,4 +32,47 @@ defmm bar (x :: <b>, y :: <b> ... rest) { make-array(2, rest) };
 bar(a, b, 3, 4, 5);
 bar(b, b, 7, 8, 9);
 
-apply(bar, make-array(a, b, 1, 2, 3));
+apply(bar, make-array(b, b, 1, 2, 3));
+
+// next-method
+
+defmm baz (x :: <a>) {
+  print("baz(<a>)");
+  print(as-string(x));
+  print(as-string(next-method));
+};
+
+defmm baz (x :: <b>) {
+  print("baz(<b>)");
+  print(as-string(x));
+  print(as-string(next-method));
+  next-method(b);
+};
+
+defmm baz (x :: <c>) {
+  print("baz(<c>)");
+  print(as-string(x));
+  print(as-string(next-method));
+  next-method();
+};
+
+baz(c);
+
+// next-method with varargs
+
+defmm xyz (x :: <a> ... rest) {
+  print("xyz(<a>)");
+  print(as-string(next-method));
+  print(as-string(x));
+  print(as-string(rest));
+};
+
+defmm xyz (x :: <b> ... rest) {
+  print("xyz(<a>)");
+  print(as-string(next-method));
+  print(as-string(x));
+  print(as-string(rest));
+  next-method(x, 4, 5, 6);
+};
+
+xyz(b, 1, 2, 3);
