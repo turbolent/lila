@@ -20,10 +20,11 @@ public class SRPDispatcher {
 		Collections.addAll(allMethods, methods);
 		Collections.sort(allMethods);
 
+		Set<LilaClass> allClasses = LilaObject.lilaClass.getAllSubclasses();
+
 		ArrayList<ArrayList<BitSet>> tables = new ArrayList<>();
 		for (int i = 0; i < arity; i++) {
 			ArrayList<BitSet> table = new ArrayList<>();
-			Set<LilaClass> allClasses = LilaObject.lilaClass.getAllSubclasses();
 			for (int j = 0; j < allClasses.size(); j++)
 				table.add(null);
 			tables.add(table);

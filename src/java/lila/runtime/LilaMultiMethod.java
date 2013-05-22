@@ -1,19 +1,17 @@
 package lila.runtime;
 
+import static java.lang.invoke.MethodType.methodType;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.util.ArrayList;
+import java.lang.invoke.MethodType;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import lila.runtime.dispatch.multiple.Method;
 import lila.runtime.dispatch.multiple.SRPDispatcher;
-
-import static java.lang.invoke.MethodType.methodType;
 
 public class LilaMultiMethod extends LilaCallable {
 
@@ -146,12 +144,20 @@ public class LilaMultiMethod extends LilaCallable {
 	// polymorphic inline cache chain limit
 	static final int maxCainCount = 5;
 
+	private static final String arityExceptionMessage =
+		"Multi-method %s requires %d arguments, but passed %d";
+
 	@Override
 	LilaObject fallback
 		(LilaCallSite callSite, LilaCallable callable, LilaObject[] args)
 		throws Throwable
 	{
 		LilaMultiMethod mm = (LilaMultiMethod)callable;
+
+		if (args.length < mm.arity) {
+			throw new RuntimeException(String.format(arityExceptionMessage,
+			                                         mm.name, mm.arity, args.length));
+		}
 
 		MethodType callSiteType = callSite.type();
 
@@ -163,9 +169,9 @@ public class LilaMultiMethod extends LilaCallable {
 		int argumentCount = callSiteType.parameterCount() - 1;
 		MethodHandle mh = targetHandle(mm, args, types, argumentCount);
 
-		// real target drops function
+		//drop multi-method
 		MethodHandle target = MethodHandles
-			.dropArguments(mh, 0, Object.class)
+			.dropArguments(mh, 0, LilaCallable.class)
 			.asType(callSiteType);
 
 		MethodHandle mhTest = check
