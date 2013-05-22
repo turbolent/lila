@@ -79,14 +79,15 @@ public class LilaClass
 			superclasses = new LilaClass[] { LilaObject.lilaClass };
 		LilaClass result = new LilaClass(false, name, null, superclasses);
 		result.classProperties = properties;
-
-		// update all multi-methods
-		for (LilaMultiMethod mm : LilaMultiMethod.getInstances())
-			mm.addClass(result);
-
+		updateMultiMethods(result);
 		return result;
 	}
 
+	static void updateMultiMethods(LilaClass type) {
+		// update all multi-methods
+		for (LilaMultiMethod mm : LilaMultiMethod.getInstances())
+			mm.addClass(type);
+	}
 
 	//// Getters
 

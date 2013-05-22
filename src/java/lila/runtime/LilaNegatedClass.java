@@ -3,9 +3,12 @@ package lila.runtime;
 
 public class LilaNegatedClass extends LilaClass {
 
-	public static final LilaClass lilaClass =
-		new LilaClass(true, "<negated-class>", LilaNegatedClass.class,
-		              LilaClass.lilaClass);
+	public static final LilaClass lilaClass;
+	static {
+		lilaClass = new LilaClass(true, "<negated-class>", LilaNegatedClass.class,
+		                          LilaClass.lilaClass);
+		LilaClass.updateMultiMethods(lilaClass);
+	}
 
 	LilaClass value;
 
