@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Core {
@@ -26,7 +27,6 @@ public class Core {
 	}
 
 	static void exportClass(LilaClass c) {
-		System.out.println("export class: " + c);
 		RT.ENV.put(c.name, c);
 	}
 
@@ -39,6 +39,7 @@ public class Core {
 		exportClass(LilaFalse.lilaClass);
 		exportClass(LilaTrue.lilaClass);
 		exportClass(LilaFunction.lilaClass);
+		exportClass(LilaMultiMethod.lilaClass);
 		exportClass(LilaPredicateMethod.lilaClass);
 		exportClass(LilaInteger.lilaClass);
 		exportClass(LilaString.lilaClass);
@@ -152,6 +153,34 @@ public class Core {
 		randomArgument.setVariadic(true);
 	}
 
+	// initialize
+
+	static LilaObject initializeLilaObject(LilaObject nextMethod, LilaObject object, LilaArray rest) {
+		String[] properties = object.getType().classProperties;
+		for (int i = 0; i < rest.array.length && i < properties.length; i++)
+			object.setProperty(properties[i], rest.array[i]);
+		return object;
+	}
+
+	static LilaMultiMethod initialize;
+	static {
+		MethodHandle initializeLilaObject = null;
+		try {
+			initializeLilaObject = lookup
+				.findStatic(Core.class, "initializeLilaObject",
+				            methodType(LilaObject.class,
+				                       LilaObject.class, LilaObject.class, LilaArray.class));
+		} catch (Throwable e) {
+			throw (AssertionError) new AssertionError().initCause(e);
+		}
+
+		initialize = new LilaMultiMethod("initialize", 1);
+		initialize.setVariadic(true);
+		initialize.addMethod(new LilaClass[] { LilaObject.lilaClass },
+		                     initializeLilaObject);
+		RT.setValue("initialize", initialize);
+	}
+
 	// make
 
 	static final MethodType builtinMakeType =
@@ -169,10 +198,10 @@ public class Core {
 			object = (LilaObject)mh.invokeExact(rest.array);
 		} else {
 			object = new LilaObject(lilaClass);
-			// TODO: replace with call to initialize
-			String[] properties = lilaClass.classProperties;
-			for (int i = 0; i < rest.array.length && i < properties.length; i++)
-				object.setProperty(properties[i], rest.array[i]);
+			LilaObject[] args = new LilaObject[rest.array.length + 1];
+			args[0] = object;
+			System.arraycopy(rest.array, 0, args, 1, rest.array.length);
+			initialize.apply(args);
 		}
 		return object;
 	}
@@ -318,5 +347,32 @@ public class Core {
 	static {
 		exportFunction("time",
 		               methodType(LilaInteger.class));
+	}
+
+	// concatenate
+
+	static LilaArray concatenate(LilaArray first, LilaArray others) {
+		int length = first.array.length;
+		for (LilaObject other : others.array) {
+			LilaArray otherArray = (LilaArray)other;
+			length += otherArray.array.length;
+		}
+		LilaObject[] result = Arrays.copyOf(first.array, length);
+		int index = first.array.length;
+		for (LilaObject other : others.array) {
+			LilaArray otherArray = (LilaArray)other;
+			int count = otherArray.array.length;
+			System.arraycopy(otherArray.array, 0, result, index, count);
+			index += count;
+		}
+		return new LilaArray(result);
+	}
+
+	static {
+		LilaFunction concatenate =
+			exportFunction("concatenate",
+			               methodType(LilaArray.class,
+			                          LilaArray.class, LilaArray.class));
+		concatenate.setVariadic(true);
 	}
 }
