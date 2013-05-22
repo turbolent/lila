@@ -396,7 +396,7 @@ class DAGBuilder {
 		mv.visitEnd();
 		cw.visitEnd();
 
-		DynamicClassLoader loader = new DynamicClassLoader();
+		DynamicClassLoader loader = DynamicClassLoader.INSTANCE;
 		byte[] code = cw.toByteArray();
 		FileOutputStream f;
 		try {

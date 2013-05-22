@@ -16,7 +16,7 @@ module Lila
     attr_reader :loader, :compiler, :context
 
     def initialize
-      @loader = DynamicClassLoader.new
+      @loader = DynamicClassLoader.INSTANCE
       @compiler = Compiler.new
       @context = Context.new
     end

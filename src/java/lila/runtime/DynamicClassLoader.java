@@ -7,6 +7,9 @@ import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodType.methodType;
 
 public class DynamicClassLoader extends ClassLoader {
+
+	public static DynamicClassLoader INSTANCE = new DynamicClassLoader();
+
 	public Class<?> define(String name, byte[] classBytes) {
 		return super.defineClass(name, classBytes, 0, classBytes.length);
 	}
