@@ -75,4 +75,12 @@ defmm xyz (x :: <b> ... rest) {
   next-method(x, 4, 5, 6);
 };
 
-xyz(b, 1, 2, 3);
+defmm xyz (x :: <c> ... rest) {
+  print("xyz(<a>)");
+  print(as-string(next-method));
+  print(as-string(x));
+  print(as-string(rest));
+  next-method();
+};
+
+xyz(c, 1, 2, 3);

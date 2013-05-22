@@ -1,0 +1,21 @@
+defclass <a> (<object>);
+defclass <b> (<a>);
+defclass <c> (<object>);
+defclass <d> (<b>, <c>);
+
+defmm foo (x :: <a>, y :: <c>) { 1 };
+defmm foo (x :: <b>, y :: <d>) { 2 };
+
+def b = make(<b>);
+def c = make(<c>);
+def d = make(<d>);
+
+foo(b, c);
+foo(d, d);
+
+// new class
+
+defclass <e> (<d>);
+def a = make(<a>);
+def e = make(<e>);
+foo(a, e); // 1

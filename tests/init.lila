@@ -1,0 +1,9 @@
+defclass <person> (<object>) { name };
+
+defmm initialize (person :: <person> ... rest) {
+  next-method();
+  print("initialized person");
+};
+
+def person = make(<person>, "Foo");
+get(person, "name");
