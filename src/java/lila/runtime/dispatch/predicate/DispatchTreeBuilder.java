@@ -136,7 +136,7 @@ class DispatchTreeInteriorNode extends DispatchTreeNode {
 	@Override
 	void compileASM(MethodVisitor mv, int argumentCount) {
 		Label elseLabel = new Label();
-		this.test.compileASM(mv, elseLabel);
+		this.test.compileASM(mv, elseLabel, argumentCount);
 		Label endLabel = new Label();
 	    this.trueNode.compileASM(mv, argumentCount);
 	    mv.visitJumpInsn(Opcodes.GOTO, endLabel);
@@ -258,9 +258,9 @@ abstract class DispatchTreeTest {
 		mv.visitJumpInsn(getElseJumpOpcode(), elseLabel);
 	}
 
-	void compileASM(MethodVisitor mv, Label elseLabel) {
-		// duplicate type identifier
-		mv.visitInsn(Opcodes.DUP);
+	void compileASM(MethodVisitor mv, Label elseLabel, int arity) {
+		// load the type identifier
+		mv.visitVarInsn(Opcodes.ILOAD, arity + 1);
 		mv.visitLdcInsn(this.identifier);
 		mv.visitJumpInsn(getElseJumpOpcode(), elseLabel);
 	}

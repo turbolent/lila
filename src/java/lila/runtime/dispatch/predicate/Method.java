@@ -3,10 +3,14 @@ package lila.runtime.dispatch.predicate;
 import java.lang.invoke.MethodHandle;
 
 public class Method {
-	MethodHandle handle;
+	private MethodHandle handle;
 
 	public Method(MethodHandle handle) {
 		this.handle = handle;
+	}
+
+	public MethodHandle getHandle() {
+		return handle;
 	}
 
 	// Debugging

@@ -24,12 +24,12 @@ import org.objectweb.asm.Opcodes;
 
 
 
-abstract class LookupDAGNode {
+public abstract class LookupDAGNode {
 
-	protected LilaPredicateMethod gf;
+	protected LilaPredicateMethod pm;
 
-	public LookupDAGNode(LilaPredicateMethod gf) {
-		this.gf = gf;
+	public LookupDAGNode(LilaPredicateMethod pm) {
+		this.pm = pm;
 	}
 
 	abstract Method evaluate(ExpressionEnvironment env);
@@ -113,9 +113,9 @@ class LookupDAGInteriorNode extends LookupDAGNode {
 		}
 
 		// load arguments
-		int arity = this.gf.getArity();
+		int arity = this.pm.arity;
 		for (int index = 0; index < arity; index++)
-			// +1: function
+			// +1: predicate method passed as first argument
 			mv.visitVarInsn(Opcodes.ALOAD, index + 1);
 
 		// invoke compiled expression method
@@ -124,7 +124,7 @@ class LookupDAGInteriorNode extends LookupDAGNode {
 			parameterTypes[index] = LilaObject.class;
 
 		ExpressionInfo expressionInfo =
-			this.gf.getExpressionInfo(this.expression);
+			this.pm.getExpressionInfo(this.expression);
 		String expressionClassName =
 			expressionInfo.getClassName().replace('.', '/');
 		String expressionMethodName = expressionInfo.getMethodName();
@@ -146,6 +146,8 @@ class LookupDAGInteriorNode extends LookupDAGNode {
 		                   lilaClassClassName, "getIdentifier",
 		                   methodType(int.class)
 		                   		.toMethodDescriptorString());
+
+		mv.visitVarInsn(Opcodes.ISTORE, argumentCount + 1);
 
 		dispatchTree.compileASM(mv, argumentCount);
 	}
@@ -204,10 +206,15 @@ class LookupDAGLeafNode extends LookupDAGNode {
 	@Override
 	void compileASM(MethodVisitor mv, int argumentCount) {
 		// get method index
-		int methodIndex = this.gf.getMethods().indexOf(this.method);
+
+		int methodIndex = this.pm.getMethods().indexOf(this.method);
+
 		mv.visitLdcInsn(methodIndex);
-		// store in local variable after all arguments (+1: function)
-		mv.visitVarInsn(Opcodes.ISTORE, argumentCount + 1);
+		// store in local variable after:
+		// - predicate method (+1)
+		// - all arguments (+ arguments)
+		// - type identifier local variable (+1)
+		mv.visitVarInsn(Opcodes.ISTORE, argumentCount + 2);
 	}
 
 	// Debugging

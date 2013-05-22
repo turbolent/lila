@@ -40,23 +40,15 @@ import lila.runtime.LilaObject;
 // (eliminations, multiple occurrences, implications of rest of clause)
 
 
-class DAGBuilder {
-
-	// TODO:
-	static Method inapplicable = new Method(null);
-	static Method ambiguous = new Method(null);
-	static {
-		inapplicable.identifier = "INAPPLICABLE";
-		ambiguous.identifier = "AMBIGUOUS";
-	}
+public class LookupDAGBuilder {
 
 	Set<LilaClass> allClasses;
-	private Method inapplicableMethod = inapplicable;
-	private Method ambiguousMethod = ambiguous;
+	private Method inapplicableMethod = LilaPredicateMethod.inapplicable;
+	private Method ambiguousMethod = LilaPredicateMethod.ambiguous;
 
-	LilaPredicateMethod gf;
+	LilaPredicateMethod pm;
 
-	public DAGBuilder(Set<LilaClass> allClasses) {
+	public LookupDAGBuilder(Set<LilaClass> allClasses) {
 		this.allClasses = allClasses;
 	}
 
@@ -135,8 +127,8 @@ class DAGBuilder {
 		return constraints(inputExpressions, result);
 	}
 
-	static Set<Expression> allExpressions(Collection<Case> cases) {
-		Set<Expression> result = new LinkedHashSet<>();
+	static LinkedHashSet<Expression> allExpressions(Collection<Case> cases) {
+		LinkedHashSet<Expression> result = new LinkedHashSet<>();
 		for (Case c : cases)
 			result.addAll(c.getExpressions());
 		return result;
@@ -147,12 +139,12 @@ class DAGBuilder {
 	Map<Method,LookupDAGLeafNode> leafNodes = new HashMap<>();
 
 
-	LookupDAGNode buildLookupDAG(LilaPredicateMethod gf) {
+	public LookupDAGNode buildLookupDAG(LilaPredicateMethod pm) {
 		// TODO: constructor?
-		this.gf = gf;
+		this.pm = pm;
 		Set<Case> cases = new HashSet<>();
-		cases.addAll(gf.getCases());
-		this.constraints = constraints(cases, gf.getInputExpressions());
+		cases.addAll(pm.getCases());
+		this.constraints = constraints(cases, pm.getInputExpressions());
 		return buildSubDAG(cases, allExpressions(cases));
 	}
 
@@ -166,14 +158,14 @@ class DAGBuilder {
 			Method targetMethod = computeTarget(cases);
 			LookupDAGLeafNode leafNode = leafNodes.get(targetMethod);
 			if (leafNode == null) {
-				leafNode = new LookupDAGLeafNode(this.gf, targetMethod);
+				leafNode = new LookupDAGLeafNode(this.pm, targetMethod);
 				leafNodes.put(targetMethod, leafNode);
 			}
 			node = leafNode;
 		} else {
 			Expression expression = pickExpression(expressions, cases);
 			LookupDAGInteriorNode interiorNode =
-				new LookupDAGInteriorNode(this.gf, expression);
+				new LookupDAGInteriorNode(this.pm, expression);
 			node = interiorNode;
 			for (LilaClass clazz : expression.getStaticClasses()) {
 				Set<Case> targetCases = targetCases(cases, expression, clazz);
@@ -340,12 +332,10 @@ class DAGBuilder {
 		cw.visit(V1_7, ACC_PUBLIC | ACC_SUPER, className,
 				null, "java/lang/Object", null);
 
-		// method type
+		// method type: +1: predicate method is first argument
 		int totalArgumentCount = argumentCount + 1;
 		Class<?>[] parameterTypes = new Class<?>[totalArgumentCount];
-		// +1: function is first argument
 		parameterTypes[0] = LilaPredicateMethod.class;
-
 	    // set types of actual arguments
 		for (int argument = 1; argument < totalArgumentCount; argument++)
 			parameterTypes[argument] = LilaObject.class;
@@ -362,10 +352,10 @@ class DAGBuilder {
 		node.compileASM(mv, argumentCount);
 
 
-		// load GF (first argument)
+		// load PM (first argument)
 		mv.visitVarInsn(Opcodes.ALOAD, 0);
 
-		// load GF's method list
+		// load PM's method list
 		String lilaGenericFunctionClassName =
 			LilaPredicateMethod.class.getName().replace('.', '/');
 		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
@@ -374,7 +364,10 @@ class DAGBuilder {
 		                   		.toMethodDescriptorString());
 
 		// load method list index from local variable
-		mv.visitVarInsn(Opcodes.ILOAD, totalArgumentCount);
+		// - predicate method (+1)
+		// - all arguments (+ arguments)
+		// - type identifier local variable
+		mv.visitVarInsn(Opcodes.ILOAD, argumentCount + 2);
 
 		// access method list item
 		String listClassName =
@@ -416,7 +409,7 @@ class DAGBuilder {
 
 	// Debugging
 
-	void dump(LookupDAGNode node) throws Exception {
+	public void dump(LookupDAGNode node) throws Exception {
 		FileWriter fileWriter = new FileWriter("lookupDAG.dot");
 		BufferedWriter writer = new BufferedWriter(fileWriter);
 		writer.write("digraph lookupDAG {\n");

@@ -36,23 +36,6 @@ module Lila
 
   class Program < Struct.new :statements; end
 
-  # subclassed to hold additional data used
-  # during compilation of predicate expressions
-  class PredicateMethod < LilaPredicateMethod
-    attr_reader :expression_method
-
-    def initialize(name)
-      super name
-      @expression_info = {}
-    end
-
-    def getExpressionInfo(expression)
-      @expression_info[expression]
-    end
-
-    # TODO: copy function
-  end
-
   class MultiMethodDefinition < Struct.new \
     :name, :parameter_list, :expressions
 
@@ -104,8 +87,8 @@ module Lila
       }
       # add method to implicit generic function
       pm = RT.getValue self.name
-      unless pm.instance_of? PredicateMethod
-        pm = PredicateMethod.new name
+      unless pm.instance_of? LilaPredicateMethod
+        pm = LilaPredicateMethod.new name, self.parameter_list.length
         RT.setValue self.name, pm
       end
       pm.addMethodHandle self.predicate, function.javaValue
@@ -113,15 +96,19 @@ module Lila
       # create dispatch function
 
       # compile each expression inside DF conjunctions once
-      sig = [Java::boolean] + [LilaObject] * self.parameter_list.length
+      # parameter types + return type
+      sig = [LilaObject] * (self.parameter_list.length + 1)
       pm.compileExpressions { |expression|
-        unless pm.expression_method[expression]
+        unless pm.getExpressionInfo expression
           puts "Compiling predicate expression: #{expression}"
-          method_name = "__exp#{pm.expression_method.length + 1}"
+          method_name = "__exp#{pm.getNextExpressionIdentifier}"
+          # temporary function so identifiers are properly resolved
+          fn = Function.new nil, self.parameter_list, expression
+          fn.close Context.new
+          # actually compile expression
           result = interpreter.compiler.compile expression,
             interpreter.context, method_name, sig do |builder|
-              expression.is_true builder
-              builder.ireturn
+              builder.areturn
             end
 
           interpreter.dump result
@@ -129,12 +116,12 @@ module Lila
           java_sig = sig.map { |c| c.java_class }
           handle = interpreter.loader.findMethod clazz,
             method_name, *java_sig
-          pm.expression_info[expression] =
-            ExpressionInfo.new clazz.java_class.name, method_name, handle
+          pm.setExpressionInfo expression,
+            ExpressionInfo.new(clazz.name, method_name, handle)
         end
       }
-
-      puts pm.expression_method
+      # recompile DAG and dispatch method handle
+      pm.updateDispatcher
 
       puts pm
     end
@@ -173,6 +160,14 @@ module Lila
 #    def toString
 #      "#[#{self.class.name}]"
 #    end
+
+    def hashCode
+      hash
+    end
+
+    def equals(other)
+      self == other
+    end
   end
 
   class Value < Expression
