@@ -24,7 +24,6 @@ public class LilaMultiMethod extends LilaCallable {
 	private static List<LilaMultiMethod> instances = new LinkedList<>();
 
 	private int arity;
-	private List<LilaObject> closedArguments = Collections.emptyList();
 	private SRPDispatcher dispatcher;
 
 
@@ -54,16 +53,6 @@ public class LilaMultiMethod extends LilaCallable {
 			types[i] = args[i].getType();
 		return types;
  	}
-
-	@Override
-	public LilaMultiMethod close(LilaObject value) {
-		LilaMultiMethod mm = new LilaMultiMethod(this.name, this.arity);
-		mm.closedArguments = new ArrayList<LilaObject>();
-		mm.closedArguments.addAll(this.closedArguments);
-		mm.closedArguments.add(value);
-		// TODO: copy methods
-		return mm;
-	}
 
 	@Override
 	public LilaObject apply(LilaObject[] arguments) {

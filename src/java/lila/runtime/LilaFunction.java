@@ -25,7 +25,6 @@ public class LilaFunction extends LilaCallable {
 		return methodHandle;
 	}
 
-	@Override
 	public LilaFunction close(LilaObject value) {
 		MethodHandle boundMethodHandle =
 			this.methodHandle.bindTo(value);

@@ -21,8 +21,6 @@ abstract class LilaCallable extends LilaObject {
 		return name;
 	}
 
-	abstract LilaCallable close(LilaObject value);
-
 	abstract LilaObject apply(LilaObject[] arguments);
 
 	abstract LilaObject fallback

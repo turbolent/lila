@@ -22,7 +22,7 @@ public class LilaPredicateMethod extends LilaCallable {
 
 	private Map<Predicate,Case> cases = new HashMap<>();
 
-	private List<LilaObject> closedArguments = Collections.emptyList();
+
 
 	private List<Expression> inputExpressions = Collections.emptyList();
 
