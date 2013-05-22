@@ -81,7 +81,8 @@ public class Test {
 		RT.initialize();
 
 
-		testDispatchTree();
+
+		// testDispatchTree();
 
 		// test1();
 		// System.out.println();
@@ -208,7 +209,7 @@ public class Test {
 		exp5.name = "e2";
 		exp5.staticClasses = allClasses;
 
-		LilaPredicateMethod gf = new LilaPredicateMethod(null, exp1, exp5);
+		LilaPredicateMethod gf = new LilaPredicateMethod(null, 2, exp1, exp5);
 
 		Predicate pred1 =
 			AndPredicate.fromPredicates(new TypePredicate(exp1, clazzA),
@@ -289,7 +290,7 @@ public class Test {
 		classes.add(LilaTrue.lilaClass);
 		classes.add(LilaFalse.lilaClass);
 
-		DAGBuilder builder = new DAGBuilder(classes);
+		LookupDAGBuilder builder = new LookupDAGBuilder(classes);
 		LookupDAGNode node = builder.buildLookupDAG(gf);
 		System.out.println(node);
 		builder.dump(node);
@@ -327,7 +328,7 @@ public class Test {
 		exp2.name = "e2";
 		//exp2.staticClasses = staticClasses;
 
-		LilaPredicateMethod gf = new LilaPredicateMethod(null);
+		LilaPredicateMethod gf = new LilaPredicateMethod(null, 2);
 
 		// method 1
 		final Method m1 = new Method(null);
@@ -348,7 +349,7 @@ public class Test {
 		gf.dumpMethods();
 
 		Set<LilaClass> classes = LilaObject.lilaClass.getAllSubclasses();
-		DAGBuilder builder = new DAGBuilder(classes);
+		LookupDAGBuilder builder = new LookupDAGBuilder(classes);
 		LookupDAGNode node = builder.buildLookupDAG(gf);
 		builder.dump(node);
 
@@ -398,15 +399,15 @@ public class Test {
 			new OrPredicate(new TypePredicate(exp1, emptyNode),
 			                new TypePredicate(exp2, emptyNode));
 
-		LilaPredicateMethod gf = new LilaPredicateMethod(null, exp1, exp2);
+		LilaPredicateMethod pm = new LilaPredicateMethod(null, 2, exp1, exp2);
 
-		gf.addMethod(pred1, m1);
-		gf.addMethod(pred2, m2);
-		gf.addMethod(TruePredicate.INSTANCE, m3);
-		gf.dumpMethods();
+		pm.addMethod(pred1, m1);
+		pm.addMethod(pred2, m2);
+		pm.addMethod(TruePredicate.INSTANCE, m3);
+		pm.dumpMethods();
 
-		DAGBuilder builder = new DAGBuilder(classes);
-		LookupDAGNode node = builder.buildLookupDAG(gf);
+		LookupDAGBuilder builder = new LookupDAGBuilder(classes);
+		LookupDAGNode node = builder.buildLookupDAG(pm);
 		builder.dump(node);
 
 		// test evaluation
@@ -431,32 +432,32 @@ public class Test {
 
 
 		// provide information about "compiled" expressions
-		gf.expressionInfo.put(exp1, new ExpressionInfo(Test.class.getName(), "test3_exp1", null));
-		gf.expressionInfo.put(exp2, new ExpressionInfo(Test.class.getName(), "test3_exp2", null));
+		pm.setExpressionInfo(exp1, new ExpressionInfo(Test.class.getName(), "test3_exp1", null));
+		pm.setExpressionInfo(exp2, new ExpressionInfo(Test.class.getName(), "test3_exp2", null));
 
 
-		MethodHandle compiled = DAGBuilder.compile(node, 2);
+		MethodHandle compiled = LookupDAGBuilder.compile(node, 2);
 		// TODO: change to MethodHandle
 		Method method = (Method)compiled
-			.invokeExact(gf,
+			.invokeExact(pm,
 			             new LilaObject(emptyNode),
 			             new LilaObject(emptyNode));
 		System.err.println(method == m1);
 
 		Method method2 = (Method)compiled
-			.invokeExact(gf,
+			.invokeExact(pm,
 			             new LilaObject(emptyNode),
 			             new LilaObject(dataNode));
 		System.err.println(method2 == m2);
 
 		Method method3 = (Method)compiled
-			.invokeExact(gf,
+			.invokeExact(pm,
 			             new LilaObject(dataNode),
 			             new LilaObject(emptyNode));
 		System.err.println(method3 == m2);
 
 		Method method4 = (Method)compiled
-			.invokeExact(gf,
+			.invokeExact(pm,
 			             new LilaObject(dataNode),
 			             new LilaObject(dataNode));
 		System.err.println(method4 == m3);

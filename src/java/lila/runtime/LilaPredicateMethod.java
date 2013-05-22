@@ -1,15 +1,23 @@
 package lila.runtime;
 
+import static java.lang.invoke.MethodType.methodType;
+
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import lila.runtime.dispatch.predicate.Case;
+import lila.runtime.dispatch.predicate.LookupDAGBuilder;
+import lila.runtime.dispatch.predicate.LookupDAGNode;
 import lila.runtime.dispatch.predicate.Method;
 import lila.runtime.dispatch.predicate.Predicate;
 
@@ -20,23 +28,41 @@ public class LilaPredicateMethod extends LilaCallable {
 		              LilaObject.lilaClass);
 
 
+	// TODO:
+	public static Method inapplicable = new Method(null);
+	public static Method ambiguous = new Method(null);
+	static {
+		inapplicable.identifier = "INAPPLICABLE";
+		ambiguous.identifier = "AMBIGUOUS";
+	}
+
+
 	private Map<Predicate,Case> cases = new HashMap<>();
-
-
 
 	private List<Expression> inputExpressions = Collections.emptyList();
 
-	public Map<Expression,ExpressionInfo> expressionInfo = new HashMap<>();
+	private Map<Expression,ExpressionInfo> expressionInfo = new HashMap<>();
 
-	// used by dispatch function
-	private List<Method> methods = new ArrayList<>();
+	private List<Method> methods;
 
-	public LilaPredicateMethod(String name) {
+	private int nextExpressionIdentifier = 1;
+
+	public int arity;
+
+
+	MethodHandle dispatcher;
+
+	public LilaPredicateMethod(String name, int arity) {
 		super(lilaClass, name);
+		this.arity = arity;
+		this.methods = new ArrayList<Method>() {{
+			add(inapplicable);
+			add(ambiguous);
+		}};
 	}
 
-	public LilaPredicateMethod(String name, Expression... inputExpressions) {
-		this(name);
+	public LilaPredicateMethod(String name, int arity, Expression... inputExpressions) {
+		this(name, arity);
 		// TODO: remove, debugging
 		int cost = 0;
 		for (Expression inputExpression : inputExpressions)
@@ -47,10 +73,6 @@ public class LilaPredicateMethod extends LilaCallable {
 
 	public Collection<Case> getCases() {
 		return this.cases.values();
-	}
-
-	public int getArity() {
-		return this.inputExpressions.size();
 	}
 
 	public List<Expression> getInputExpressions() {
@@ -84,47 +106,9 @@ public class LilaPredicateMethod extends LilaCallable {
 		}
 	};
 
-	// TODO: rename; override in PredicateMethod
-	//       subclass defined inside interpreter
-	LilaPredicateMethod copy() {
-		return null;
-	};
-
-	@Override
-	public LilaPredicateMethod close(LilaObject value) {
-		LilaPredicateMethod gf = copy();
-		gf.closedArguments = new ArrayList<LilaObject>();
-		gf.closedArguments.addAll(this.closedArguments);
-		gf.closedArguments.add(value);
-		// TODO: copy cases
-		return gf;
-	}
-
-	@Override
-	public LilaObject apply(LilaObject[] arguments) {
-		// TODO:
-		return null;
-	}
-
 	@Override
 	public String toString() {
 		return String.format("#[PredicateMethod %s]", this.getName());
-	}
-
-	@Override
-	LilaObject fallback
-		(LilaCallSite callSite, LilaCallable callable, LilaObject[] args)
-		throws Throwable
-	{
-		// TODO:
-		System.out.println("PREDICATE METHOD CALL");
-		return null;
-	}
-
-	// NOTE: implemented in interpreter, see ruby code
-	// returns the compiled method handle for the given expression
-	public ExpressionInfo getExpressionInfo(Expression expression) {
-		return this.expressionInfo.get(expression);
 	}
 
 	public void dumpMethods() {
@@ -138,5 +122,136 @@ public class LilaPredicateMethod extends LilaCallable {
 		System.err.println("GF" + builder);
 	}
 
+	public ExpressionInfo getExpressionInfo(Expression expression) {
+		return this.expressionInfo.get(expression);
+	}
 
+	public void setExpressionInfo(Expression exp, ExpressionInfo expressionInfo) {
+		this.expressionInfo.put(exp, expressionInfo);
+	}
+
+	public int getNextExpressionIdentifier() {
+		return this.nextExpressionIdentifier++;
+	}
+
+	public void updateDispatcher() throws Throwable {
+		LookupDAGBuilder builder = new LookupDAGBuilder(LilaObject.lilaClass.getAllSubclasses());
+		LookupDAGNode node = builder.buildLookupDAG(this);
+		builder.dump(node);
+		this.dispatcher = LookupDAGBuilder.compile(node, this.arity)
+			.bindTo(this);
+	}
+
+	@Override
+	public LilaObject apply(LilaObject[] arguments) {
+		try {
+			MethodHandle mh = targetHandle(this, arguments.length);
+			return (LilaObject)mh.invokeWithArguments((Object[])arguments);
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+
+	public static LilaObject invoke(LilaPredicateMethod pm, LilaObject[] args)
+		throws Throwable
+	{
+		Method m = (Method)pm.dispatcher.invokeWithArguments((Object[])args);
+		return (LilaObject)m.getHandle().invokeWithArguments((Object[])args);
+	}
+
+	public static boolean check(LilaPredicateMethod pm, LilaObject sitePM) {
+		return sitePM == pm;
+	}
+
+	static MethodHandle methodHandleForArguments
+		(LilaPredicateMethod pm, MethodHandle handle, int argumentCount)
+	{
+		int requiredParameterCount = pm.arity;
+		if (pm.isVariadic())
+			requiredParameterCount--;
+
+		// pm variadic and additional arguments supplied?
+		if (pm.isVariadic()
+			&& argumentCount >= requiredParameterCount)
+		{
+			// create adapter boxing the additional arguments array
+			int pos = requiredParameterCount;
+			handle = MethodHandles.filterArguments(handle, pos, RT.boxAsArray);
+			// create adapter collecting additional arguments
+			int count = (argumentCount - requiredParameterCount);
+			handle = handle.asCollector(LilaObject[].class, count);
+		}
+		return handle;
+	}
+
+	static MethodHandle targetHandle(LilaPredicateMethod pm, int argumentCount) {
+		MethodHandle mh = invoke.bindTo(pm)
+			.asCollector(LilaObject[].class, argumentCount);
+		return methodHandleForArguments(pm, mh, argumentCount);
+	}
+
+	// polymorphic inline cache chain limit
+	static final int maxCainCount = 3;
+
+	@Override
+	public LilaObject fallback
+		(LilaCallSite callSite, LilaCallable callable, LilaObject[] args)
+		throws Throwable
+	{
+
+		LilaPredicateMethod pm = (LilaPredicateMethod)callable;
+
+		MethodType callSiteType = callSite.type();
+		int argumentCount = callSiteType.parameterCount() - 1;
+
+		MethodHandle mh = targetHandle(pm, argumentCount);
+		// drop predicate method
+		MethodHandle target = MethodHandles
+			.dropArguments(mh, 0, LilaCallable.class)
+			.asType(callSiteType);
+
+		MethodHandle mhTest = check.bindTo(pm);
+
+		MethodType mhTestType = mhTest.type()
+			.changeParameterType(0, callSiteType.parameterType(0));
+		mhTest = mhTest.asType(mhTestType);
+
+		MethodHandle fallback;
+		// check if polymorphic inline cache chain limit is reached
+		if (callSite.chainCount > maxCainCount) {
+			// guard fallback is this default fallback
+			fallback = RT.fallback.bindTo(callSite)
+				// -1: function
+				.asCollector(LilaObject[].class, argumentCount);
+			callSite.chainCount = 0;
+		} else {
+			// set guard fallback to call site's current target
+			fallback = callSite.getTarget();
+			callSite.chainCount += 1;
+		}
+
+		MethodHandle guard =
+			MethodHandles.guardWithTest(mhTest, target, fallback);
+		callSite.setTarget(guard);
+
+		return (LilaObject)mh.invokeWithArguments((Object[])args);
+	}
+
+	private static final MethodHandle check;
+	private static final MethodHandle invoke;
+	static {
+		Lookup lookup = MethodHandles.lookup();
+		try {
+			check = lookup
+				.findStatic(LilaPredicateMethod.class, "check",
+				            methodType(boolean.class,
+				                       LilaPredicateMethod.class, LilaObject.class));
+			invoke = lookup
+				.findStatic(LilaPredicateMethod.class, "invoke",
+				            methodType(LilaObject.class,
+				                       LilaPredicateMethod.class, LilaObject[].class));
+		} catch (ReflectiveOperationException e) {
+			throw (AssertionError)new AssertionError().initCause(e);
+		}
+	}
 }
