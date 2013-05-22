@@ -1,6 +1,7 @@
 require 'lila/nodes'
 
 java_import 'lila.runtime.dispatch.predicate.TestPredicate'
+java_import 'lila.runtime.dispatch.predicate.TruePredicate'
 java_import 'lila.runtime.dispatch.predicate.NotPredicate'
 java_import 'lila.runtime.dispatch.predicate.AndPredicate'
 java_import 'lila.runtime.dispatch.predicate.OrPredicate'
@@ -107,6 +108,15 @@ module Lila
           :body => simple(:body)}) {
       PredicateMethodDefinition.new name.to_s, parameter_list, predicate, body
     }
+
+    rule(:predicate_method_definition =>
+         {:identifier => simple(:name),
+          :parameter_list => simple(:parameter_list),
+          :default => simple(:default),
+          :body => simple(:body)}) {
+      PredicateMethodDefinition.new name.to_s, parameter_list, TruePredicate.INSTANCE, body
+    }
+
 
     rule(:class_definition =>
          {:identifier => simple(:name),

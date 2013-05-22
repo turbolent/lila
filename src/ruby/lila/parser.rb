@@ -46,7 +46,8 @@ module Lila
     rule(:predicate_method_definition) {
       (kDEFPM >> identifier >>
         parameter_list.as(:parameter_list) >>
-        kWHEN >> predicate.as(:predicate) >>
+        ((kWHEN >> predicate.as(:predicate)) |
+          (kDEFAULT.as(:default))) >>
         body.as(:body)).as(:predicate_method_definition)
     }
 
@@ -317,6 +318,6 @@ module Lila
     end
 
     keywords :fn, :def, :defclass, :defn, :defmm, :defpm,
-      :if, :else, :let, :while, :when, :not, :test
+      :if, :else, :let, :while, :when, :not, :test, :default
   end
 end
