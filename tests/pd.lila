@@ -1,0 +1,29 @@
+defclass <tree-node> (<object>) { left; right };
+defclass <empty-node> (<tree-node>);
+
+defpm isomorphic? (a, b) 
+  when (a :: <empty-node>)
+    && (b :: <empty-node>)
+{ true };
+
+defpm isomorphic? (a, b)
+  when (a :: <empty-node>)
+    || (b :: <empty-node>)
+{ false };
+
+defpm isomorphic? (a, b) default {
+  isomorphic?(get(a, "left"), get(b, "left"))
+    && isomorphic?(get(a, "right"), get(b, "right"));
+};
+
+def empty = make(<empty-node>);
+def empty-tree = make(<tree-node>, empty, empty);
+def tree1 = make(<tree-node>, empty, empty-tree);
+def tree2 = make(<tree-node>, empty-tree, empty);
+
+isomorphic?(empty, empty); // => true
+isomorphic?(empty, tree1); // => false
+isomorphic?(tree1, tree2); // => false
+isomorphic?(tree1, tree1); // => true
+
+apply(isomorphic?, make-array(empty, empty));
