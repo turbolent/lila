@@ -153,6 +153,20 @@ public class Core {
 		randomArgument.setVariadic(true);
 	}
 
+	// random-element
+
+	static Random random = new Random();
+
+	static LilaObject randomElement(LilaArray elements) {
+		LilaObject[] objects = elements.array;
+		return objects[random.nextInt(objects.length)];
+	}
+
+	static {
+		exportFunction("random-element", "randomElement",
+		               methodType(LilaObject.class, LilaArray.class));
+	}
+
 	// initialize
 
 	static LilaObject initializeLilaObject(LilaObject nextMethod, LilaObject object, LilaArray rest) {
