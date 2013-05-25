@@ -166,17 +166,23 @@ module Lila
       Sequence.new expressions
     }
 
-    rule(:identifier => simple(:name),
-         :value => simple(:value)) {
+    rule(:variable_definition => {
+          :identifier => simple(:name),
+          :value => simple(:value)}) {
       VariableDefinition.new name.to_s, value
     }
 
-    # macros
+    rule(:binding => {:identifier => simple(:identifier),
+                      :value => simple(:value)}) {
+      Binding.new identifier.to_s, value
+    }
 
-    rule(:let_expr => {:identifier => simple(:identifier),
-                       :value => simple(:value),
+    # macros
+    rule(:let_expr => {:bindings => sequence(:bindings),
                        :body => simple(:body)}) {
-      Macros.bind identifier.name.to_s, value, body
+      bindings.reverse.reduce(body) { |body, binding|
+        Macros.bind binding.name, binding.value, body
+      }
     }
 
     rule(:or_expr => {:left => simple(:left),

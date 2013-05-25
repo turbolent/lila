@@ -783,4 +783,6 @@ module Lila
       end
     end
   end
+
+  class Binding < Struct.new :name, :value; end
 end

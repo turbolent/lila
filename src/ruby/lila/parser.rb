@@ -77,8 +77,8 @@ module Lila
     }
 
     rule(:variable_definition) {
-      kDEF >> identifier >>
-        tEQUALS >> expression.as(:value)
+      (kDEF >> identifier >>
+        tEQUALS >> expression.as(:value)).as(:variable_definition)
     }
 
     rule(:identifier) {
@@ -177,9 +177,15 @@ module Lila
     }
 
     rule(:let_expression) {
-      (kLET >> identifier.as(:identifier) >>
-       tEQUALS >> expression.as(:value) >>
+      (kLET >>
+       (binding.repeat(1,1) >>
+         (tCOMMA >> binding).repeat).as(:bindings) >>
        body.as(:body)).as(:let_expr)
+    }
+
+    rule(:binding) {
+      (identifier.as(:identifier) >>
+        tEQUALS >> expression.as(:value)).as(:binding)
     }
 
     rule(:if_expression) {
