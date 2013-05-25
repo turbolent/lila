@@ -340,6 +340,7 @@ module Lila
         parameter.function = self
       }
       @body = body
+      @vars = 0
     end
 
     def hash
@@ -386,6 +387,8 @@ module Lila
 
       builder.class_builder.public_static_method internal_name, [],
         LilaObject, *param_type do |method|
+          context = Context.new(context)
+          context.function = self
           @body.compile context, method
           method.areturn
         end
@@ -420,6 +423,12 @@ module Lila
         @body.close context
         @closed = true
       end
+    end
+
+    def nextVar
+      var = @parameter_list.length + @vars
+      @vars += 1
+      var
     end
 
     def toString
@@ -647,6 +656,7 @@ module Lila
       end_label = gensym
       builder.ifeq end_label
       @body.compile context, builder
+      # discard result
       builder.pop
       builder.goto test_label
       builder.label end_label
@@ -661,6 +671,66 @@ module Lila
 
      def toString
        "while #{@test} { #{@body} }"
+     end
+  end
+
+  class Repetition < Expression
+    attr_reader :count, :body
+
+    def initialize(count, body)
+      super()
+      @count = count
+      @body = body
+    end
+
+    def hash
+      @count.hash ^ @body.hash
+    end
+
+    def ==(other)
+      self.class.equal?(other.class) and
+        @count == other.count and
+        @body == other.body
+    end
+
+    alias eql? ==
+
+    def resolveBindings(env)
+      @count = @count.resolveBindings env
+      @body = @body.resolveBindings env
+      self
+    end
+
+    def compile(context, builder)
+      var = context.nextVar
+      # TODO: improve: don't box and unbox if constant
+      @count.compile context, builder
+      builder.getfield LilaInteger, 'value', Java::long
+      # TODO: improve: var should be long
+      builder.l2i
+      builder.istore var
+      test_label = gensym
+      builder.label test_label
+      builder.iload var
+      end_label = gensym
+      builder.ifeq end_label
+      @body.compile context, builder
+      # discard result
+      builder.pop
+      builder.iinc var, -1
+      builder.goto test_label
+      builder.label end_label
+      BooleanValue.new(false).compile context, builder
+    end
+
+    def close(context)
+      [@count, @body].each { |expression|
+        expression.close context
+      }
+     end
+
+     def toString
+       "dotimes #{@count} { #{@body} }"
      end
   end
 

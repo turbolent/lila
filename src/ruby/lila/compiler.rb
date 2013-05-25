@@ -31,6 +31,7 @@ module Lila
     def initialize(parent = nil)
       @parent = parent
       @functions = {}
+      @vars = 0
     end
 
     def register_internal_function(internal_name, name, type, rest)
@@ -45,6 +46,16 @@ module Lila
       (@function.parameter_list.parameters.find { |parameter|
         parameter.name == name
        } if @function) || @parent.find_parameter(name) if @parent
+    end
+
+    def nextVar
+      if @function
+        @function.nextVar
+      else
+        var = @vars
+        @vars += 1
+        var
+      end
     end
   end
 

@@ -170,6 +170,7 @@ module Lila
        let_expression |
        if_expression |
        while_expression |
+       dotimes_expression |
        function |
        value |
        identifier) >> tWS?
@@ -189,6 +190,12 @@ module Lila
 
     rule(:while_expression) {
       kWHILE >> expression.as(:test) >>
+        body.as(:body)
+    }
+
+    rule(:dotimes_expression) {
+      kDOTIMES >> tOPEN_PAREN >>
+        expression.as(:count) >> tCLOSE_PAREN >>
         body.as(:body)
     }
 
@@ -318,6 +325,6 @@ module Lila
     end
 
     keywords :fn, :def, :defclass, :defn, :defmm, :defpm,
-      :if, :else, :let, :while, :when, :not, :test, :default
+      :if, :else, :let, :while, :when, :not, :test, :default, :dotimes
   end
 end

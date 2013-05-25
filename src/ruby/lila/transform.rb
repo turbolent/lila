@@ -152,6 +152,11 @@ module Lila
                       BooleanValue.new(false)
     }
 
+    rule(:count => simple(:count),
+         :body => simple(:body)) {
+      Repetition.new count, body
+    }
+
     rule(:test => simple(:test),
          :body => simple(:body)) {
       Loop.new test, body
