@@ -1,0 +1,32 @@
+defclass <shape> (<object>);
+defclass <circle> (<shape>);
+defclass <polygon> (<shape>);
+defclass <rectangle> (<polygon>);
+defclass <triangle> (<polygon>);
+
+def classes = make-array(<shape>, <circle>, <polygon>, <rectangle>, <triangle>);
+
+print(as-string(classes));
+
+defmm area (circle :: <circle>) {
+  true
+};
+
+defmm area (rectangle :: <rectangle>) {
+ true
+};
+
+defmm area (triangle :: <triangle>) {
+  true
+};
+
+let objects = make-array(make(<circle>),
+                         make(<rectangle>),
+                         make(<triangle>))
+{
+  benchmark(fn () {
+    dotimes (1000000) {
+      area(random-element(objects));
+    }
+  }, 100)
+};

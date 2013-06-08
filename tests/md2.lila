@@ -10,12 +10,15 @@ def b = make(<b>);
 def c = make(<c>);
 def d = make(<d>);
 
-foo(b, c);
-foo(d, d);
+print(as-string(foo(b, c))); // => 1
+print(as-string(foo(d, d))); // => 2
 
 // new class
 
 defclass <e> (<d>);
 def a = make(<a>);
 def e = make(<e>);
-foo(a, e); // 1
+print(as-string(foo(a, e))); // => 1
+
+defmm foo (x :: <a>, y :: <e>) { 3 };
+print(as-string(foo(a, e))); // => 3

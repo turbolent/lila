@@ -1,0 +1,12 @@
+defpm foo (x) when (x :: <string>) || (x :: <integer>) {
+  "23"
+};
+
+foo("anything");
+foo(42);
+
+defpm foo (x) when (x :: <boolean>) {
+  x
+};
+
+foo(true);

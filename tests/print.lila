@@ -1,0 +1,21 @@
+print("Hello, world!");
+
+let x = "x" {
+  print(x);
+  fn () { 23 }
+};
+
+def y = "y";
+
+print(y);
+
+defclass <foo> (<object>) { a; b };
+
+print(as-string(<foo>));
+print(as-string(make(<foo>, "a", "b")));
+
+dotimes (4) {
+  dotimes (3) {
+    print("X");
+  }
+};

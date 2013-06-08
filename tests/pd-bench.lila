@@ -25,29 +25,24 @@ def empty-tree = make(<data-node>, empty, empty);
 def tree1 = make(<data-node>, empty, empty-tree);
 def tree2 = make(<data-node>, empty-tree, empty);
 
-isomorphic?(empty, empty); // => true
-isomorphic?(empty, tree1); // => false
-isomorphic?(tree1, tree2); // => false
-isomorphic?(tree1, tree1); // => true
-apply(isomorphic?, make-array(empty, empty)); // => true
-
 let objs = make-array(empty, tree1, tree2) {
- benchmark(fn () {
+  benchmark(fn () {
     dotimes (10000000) {
        random-element(objs);
        random-element(objs);
     }
   }, 5);
+
   benchmark(fn () {
     dotimes (10000000) {
        isomorphic?(random-element(objs),
                    random-element(objs));
     }
   }, 10);
+
   benchmark(fn () {
     dotimes (10000000) {
        isomorphic?(tree1, tree2);
     }
   }, 10);
 };
-

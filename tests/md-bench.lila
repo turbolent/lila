@@ -1,3 +1,4 @@
+
 defclass <surface> (<object>);
 defclass <display> (<surface>);
 defclass <etch-a-sketch> (<surface>);
@@ -7,40 +8,51 @@ defclass <polygon> (<shape>);
 defclass <rectangle> (<polygon>);
 
 defmm draw (display :: <display>, shape :: <shape>) {
-  true // "RENDER a SHAPE"
+  true // RENDER a SHAPE
 };
 
 defmm draw (display :: <display>, rectangle :: <rectangle>) {
- true // "RENDER a RECT"
+  true // RENDER a RECT
 };
 
 defmm draw (display :: <display>, polygon :: <polygon>) {
-  true // "RENDER a POLY"
+  true // RENDER a POLY
 };
 
 defmm draw (etch-a-sketch :: <etch-a-sketch>, shape :: <shape>) {
-  true // "SKETCH a SHAPE"
+  true // SKETCH a SHAPE
 };
 
 defmm draw (etch-a-sketch :: <etch-a-sketch>, rectangle :: <rectangle>) {
-  true // "SKETCH a RECT"
+  true // SKETCH a RECT
 };
 
 defmm draw (etch-a-sketch :: <etch-a-sketch>, polygon :: <polygon>) {
-  true // "SKETCH a POLY"
+  true // SKETCH a POLY
 };
 
 let objects1 = make-array(make(<etch-a-sketch>),
                           make(<display>)),
     objects2 = make-array(make(<rectangle>),
                           make(<polygon>)),
-    start = time()
+    object1 = nth(0, objects1),
+    object2 = nth(0, objects2)
 {
-  dotimes (100000000) {
-    draw(random-element(objects1),
-         random-element(objects2));
-  };
-  let end = time() {
-    -(end, start)
-  }
+  benchmark(fn () {
+    dotimes (10000000) {
+      random-element(objects1);
+      random-element(objects2);
+    }
+  }, 5);
+  benchmark(fn () {
+    dotimes (10000000) {
+       draw(random-element(objects1),
+            random-element(objects2));
+    }
+  }, 10);
+  benchmark(fn () {
+    dotimes (10000000) {
+       draw(object1, object2);
+    }
+  }, 10);
 };
