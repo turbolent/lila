@@ -366,7 +366,7 @@ public class LookupDAGBuilder {
 		// load method list index from local variable
 		// - predicate method (+1)
 		// - all arguments (+ arguments)
-		// - type identifier local variable
+		// - type identifier local variable (+1)
 		mv.visitVarInsn(Opcodes.ILOAD, argumentCount + 2);
 
 		// access method list item

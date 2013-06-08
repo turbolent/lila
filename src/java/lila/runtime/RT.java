@@ -148,6 +148,7 @@ public class RT {
 	}
 
 	public static void initialize() {
+		System.out.println("initializing runtime ...");
 		Core.initialize();
 	}
 }

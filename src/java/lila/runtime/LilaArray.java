@@ -4,9 +4,12 @@ import java.util.Arrays;
 
 public class LilaArray extends LilaObject {
 
-	public static final LilaClass lilaClass =
-		new LilaClass(true, "<array>", LilaArray.class,
-		              LilaObject.lilaClass);
+	public static final LilaClass lilaClass;
+	static {
+		lilaClass = new LilaClass(true, "<array>", LilaArray.class,
+	                          LilaObject.lilaClass);
+		LilaClass.updateMultiMethods(lilaClass);
+	}
 
 	LilaObject[] array;
 

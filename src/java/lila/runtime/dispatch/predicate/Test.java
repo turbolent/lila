@@ -41,6 +41,7 @@ class Var extends Expression {
 		else
 			return subst;
 	}
+
 }
 
 class BinaryExpression extends Expression {
@@ -78,17 +79,21 @@ public class Test {
 
 	public static void main(String[] args) throws Throwable {
 
-		RT.initialize();
+		// RT.initialize();
 
 
+//		Set<Expression> es = new HashSet<>();
+//		es.add(new Var("a"));
+//		es.add(new Var("a"));
+//		System.out.println(es.size());
 
-		// testDispatchTree();
+		 testDispatchTree();
 
 		// test1();
 		// System.out.println();
 		// test2();
 
-		test3();
+		// test3();
 
 	}
 
@@ -398,12 +403,16 @@ public class Test {
 		Predicate pred2 =
 			new OrPredicate(new TypePredicate(exp1, emptyNode),
 			                new TypePredicate(exp2, emptyNode));
+		
+		Predicate pred3 =
+			new AndPredicate(new TypePredicate(exp1, dataNode),
+			                 new TypePredicate(exp2, dataNode));
 
 		LilaPredicateMethod pm = new LilaPredicateMethod(null, 2, exp1, exp2);
 
 		pm.addMethod(pred1, m1);
 		pm.addMethod(pred2, m2);
-		pm.addMethod(TruePredicate.INSTANCE, m3);
+		pm.addMethod(pred3, m3);
 		pm.dumpMethods();
 
 		LookupDAGBuilder builder = new LookupDAGBuilder(classes);

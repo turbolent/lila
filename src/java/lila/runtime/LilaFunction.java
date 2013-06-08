@@ -9,11 +9,14 @@ import java.lang.invoke.MethodType;
 
 public class LilaFunction extends LilaCallable {
 
-	public static final LilaClass lilaClass =
-		new LilaClass(true, "<function>", LilaFunction.class,
-		              LilaObject.lilaClass);
+	public static final LilaClass lilaClass;
+	static {
+		lilaClass = new LilaClass(true, "<function>", LilaFunction.class,
+		                          LilaObject.lilaClass);
+		LilaClass.updateMultiMethods(lilaClass);
+	}	
 
-	private MethodHandle methodHandle;
+	public MethodHandle methodHandle;
 
 	public LilaFunction(String name, MethodHandle methodHandle) {
 		super(lilaClass, name);

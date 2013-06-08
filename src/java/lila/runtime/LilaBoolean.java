@@ -2,9 +2,12 @@ package lila.runtime;
 
 public abstract class LilaBoolean extends LilaObject {
 
-	public static final LilaClass lilaClass =
-		new LilaClass(true, "<boolean>", LilaBoolean.class,
-		              LilaObject.lilaClass);
+	public static final LilaClass lilaClass;
+	static {
+		lilaClass = new LilaClass(true, "<boolean>", LilaBoolean.class,
+		                          LilaObject.lilaClass);
+		LilaClass.updateMultiMethods(lilaClass);
+	}
 
 	public static LilaBoolean TRUE = new LilaTrue();
 	public static LilaBoolean FALSE = new LilaFalse();

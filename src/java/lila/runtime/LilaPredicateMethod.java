@@ -4,14 +4,13 @@ import static java.lang.invoke.MethodType.methodType;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +22,12 @@ import lila.runtime.dispatch.predicate.Predicate;
 
 public class LilaPredicateMethod extends LilaCallable {
 
-	public static final LilaClass lilaClass =
-		new LilaClass(true, "<predicate-method>", LilaPredicateMethod.class,
+	public static final LilaClass lilaClass;
+	static {
+		lilaClass = new LilaClass(true, "<predicate-method>", LilaPredicateMethod.class,
 		              LilaObject.lilaClass);
-
+		LilaClass.updateMultiMethods(lilaClass);
+	}
 
 	// TODO:
 	public static Method inapplicable = new Method(null);

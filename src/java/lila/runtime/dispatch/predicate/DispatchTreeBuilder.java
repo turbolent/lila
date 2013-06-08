@@ -543,8 +543,11 @@ public class DispatchTreeBuilder {
 		             .bindTo(targets.toArray(new LookupDAGNode[targets.size()]));
 	}
 
+	static int dispatchTreeCount = 0;
+	
 	public static void dump(DispatchTreeNode node) throws Exception {
-		FileWriter fileWriter = new FileWriter("dispatchTree.dot");
+		dispatchTreeCount += 1;
+		FileWriter fileWriter = new FileWriter("dispatchTree" + dispatchTreeCount + ".dot");
 		BufferedWriter writer = new BufferedWriter(fileWriter);
 		writer.write("digraph dispatchTree {\n");
 		writer.write("rankdir=TB; ranksep=1; nodesep=0.7; forcelabels=true;\n");

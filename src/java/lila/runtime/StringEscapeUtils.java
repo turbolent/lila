@@ -20,8 +20,6 @@ package lila.runtime;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * <p>Escapes and unescapes <code>String</code>s for

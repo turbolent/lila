@@ -40,34 +40,35 @@ public class SRPDispatcher {
 
 	static MethodHandle[] noMethods = new MethodHandle[0];
 
+	private BitSet getSet(LilaClass[] types, int pos) {
+		int identifier = types[pos].getIdentifier();
+		return tables.get(pos).get(identifier);
+	}
+	
 	public MethodHandle[] dispatch(LilaClass... types) {
-		int identifier = types[0].getIdentifier();
-		BitSet set = tables.get(0).get(identifier);
+		BitSet set = getSet(types, 0);
 		if (set == null)
 			return noMethods;
 		set = (BitSet)set.clone();
 		for (int i = 1; i < types.length; i++) {
-			int otherIdentifier = types[i].getIdentifier();
-			BitSet otherSet = tables.get(i).get(otherIdentifier);
+			BitSet otherSet = getSet(types, i);
 			if (otherSet == null)
 				return noMethods;
 			set.and(otherSet);
 		}
 		MethodHandle[] result = new MethodHandle[set.cardinality()];
-		int i = 0;
-		for (int j = set.nextSetBit(0); j >= 0; j = set.nextSetBit(j + 1))
-			result[i++] = this.methods.get(j).getMethodHandle();
+		for (int i = 0, j = set.nextSetBit(0); j >= 0; j = set.nextSetBit(j + 1), i++)
+			result[i] = this.methods.get(j).getMethodHandle();
 		return result;
 	}
 
-	private void addMethod
-		(List<BitSet> table, LilaClass specializer, int pos)
-	{
+	private void addMethod(List<BitSet> table, LilaClass specializer, int pos) {
 		for (LilaClass subtype : specializer.getAllSubclasses()) {
-			BitSet bitset = table.get(subtype.getIdentifier());
+			int identifier = subtype.getIdentifier();
+			BitSet bitset = table.get(identifier);
 			if (bitset == null) {
 				bitset = new BitSet();
-				table.set(subtype.getIdentifier(), bitset);
+				table.set(identifier, bitset);
 			}
 			bitset.set(pos);
 		}
@@ -75,14 +76,12 @@ public class SRPDispatcher {
 
 	public void addNewMethod(Method method) {
 		int index = Collections.binarySearch(methods, method);
-		if (index < 0) index = ~index;
-
+		if (index < 0) 
+			index = ~index;
 		methods.add(index, method);
-
 		for (int i = 0; i < tables.size(); i++) {
 			ArrayList<BitSet> table = tables.get(i);
-
-			// shift all sets in table
+			LilaClass spezializer = method.getSpecializer(i);
 			for (BitSet bitset : table) {
 				if (bitset == null)
 					continue;
@@ -90,18 +89,14 @@ public class SRPDispatcher {
 					bitset.set(j, bitset.get(j - 1));
 				bitset.set(index, false);
 			}
-
-			this.addMethod(table, method.getSpecializer(i), index);
+			this.addMethod(table, spezializer, index);
 		}
 	}
 
 	public void addNewClass(LilaClass type) {
-		// add new type entry to each table
 		for (int i = 0; i < tables.size(); i++) {
 			ArrayList<BitSet> table = tables.get(i);
 			table.add(type.getIdentifier(), null);
-
-			// add methods if applicable
 			int j = 0;
 			for (Method method : this.methods) {
 				LilaClass specializer = method.getSpecializer(i);

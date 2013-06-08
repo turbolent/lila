@@ -15,11 +15,16 @@ import lila.runtime.dispatch.multiple.SRPDispatcher;
 
 public class LilaMultiMethod extends LilaCallable {
 
-	public static final LilaClass lilaClass =
-		new LilaClass(true, "<multi-method>", LilaMultiMethod.class,
-		              LilaObject.lilaClass);
-
 	private static List<LilaMultiMethod> instances = new LinkedList<>();
+	
+	public static final LilaClass lilaClass;
+	static {
+		lilaClass =	new LilaClass(true, "<multi-method>", LilaMultiMethod.class,
+		           	              LilaObject.lilaClass);
+		LilaClass.updateMultiMethods(lilaClass);
+	}
+		
+
 
 	private int arity;
 	private SRPDispatcher dispatcher;
