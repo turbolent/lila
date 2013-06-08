@@ -6,7 +6,9 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class Core {
@@ -388,5 +390,38 @@ public class Core {
 			               methodType(LilaArray.class,
 			                          LilaArray.class, LilaArray.class));
 		concatenate.setVariadic(true);
+	}
+	
+	
+	// benchmark
+	
+	static LilaBoolean benchmark(LilaFunction fn, LilaInteger count) throws Throwable {
+		long n = count.value;
+		for (int j = 0; j < n; j++) {
+			long startTime = System.nanoTime();
+			LilaObject ignored = (LilaObject)fn.methodHandle.invokeExact();
+			long stopTime = System.nanoTime();
+			long runTime = stopTime - startTime;
+			System.out.println(runTime / 1000000);
+		}
+		return LilaBoolean.FALSE;
+	}
+	
+	static {
+		exportFunction("benchmark",
+		               methodType(LilaBoolean.class, 
+		                          LilaFunction.class, LilaInteger.class));
+	}
+	
+	// nth
+	
+	static LilaObject nth(LilaInteger pos, LilaArray array)  {
+		return array.array[(int)pos.value];
+	}
+	
+	static {
+		exportFunction("nth",
+		               methodType(LilaObject.class, 
+		                          LilaInteger.class, LilaArray.class));
 	}
 }
