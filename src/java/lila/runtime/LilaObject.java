@@ -5,12 +5,15 @@ import java.util.Map;
 
 public class LilaObject {
 
-	public static LilaClass lilaClass =
-		new LilaClass(true, "<object>", LilaObject.class);
-
+	public static LilaClass lilaClass;
+		
 	static {
+		lilaClass = new LilaClass(true, "<object>", LilaObject.class);
+		LilaClass.updateMultiMethods(lilaClass);
+
 		LilaClass.lilaClass = new LilaClass(true, "<class>", LilaClass.class,
 		                                    LilaObject.lilaClass);
+		LilaClass.updateMultiMethods(LilaClass.lilaClass);
 	}
 
 	private LilaClass type;

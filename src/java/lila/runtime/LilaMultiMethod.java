@@ -9,6 +9,8 @@ import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import lila.runtime.dispatch.multiple.Method;
 import lila.runtime.dispatch.multiple.SRPDispatcher;
@@ -133,21 +135,68 @@ public class LilaMultiMethod extends LilaCallable {
 		MethodHandle mh = methods[0].bindTo(nextMethod);
 		return methodHandleForArguments(mm, mh, argumentCount);
 	}
-
-	public static boolean check
-		(LilaMultiMethod siteMM, LilaClass[] types, LilaMultiMethod mm, LilaObject... args)
+	
+	public static boolean checkMethod(LilaMultiMethod mm, LilaObject[] args) {
+		return args[0] == mm;
+	}
+	
+	public static boolean checkType(LilaClass type, Integer pos, LilaObject[] args) {
+		return args[pos].getType() == type;
+	}
+	
+	private static MethodHandle getFallback(LilaCallSite callSite, int argumentCount) {
+		return RT.fallback.bindTo(callSite)
+			.asCollector(LilaObject[].class, argumentCount - 1)
+			.asSpreader(LilaObject[].class, argumentCount);
+	}
+	
+	private static MethodHandle compileLevel0
+		(LilaCallSite callSite, int argumentCount, LinkedList<LilaMultiMethod> remaining) 
 	{
-		if (mm != siteMM)
-			return false;
-		for (int i = 0; i < types.length; i++) {
-			if (types[i] != args[i].getType())
-				return false;
+		if (remaining.size() == 0) {
+			return getFallback(callSite, argumentCount);
+		} else {
+			LilaMultiMethod mm = remaining.remove();
+			Map entry = callSite.multiMethodCache.get(mm);
+			LinkedList<LilaClass> types = new LinkedList<>(); 
+			types.addAll(entry.keySet());
+			return MethodHandles.guardWithTest(checkMethod.bindTo(mm),
+			                                   compileLevelN(1, callSite, argumentCount, entry, types),
+			                                   compileLevel0(callSite, argumentCount, remaining));
 		}
-		return true;
+	}
+	
+	private static MethodHandle compileLevelN
+		(int level, LilaCallSite callSite, int argumentCount, 
+		 Map entry, LinkedList<LilaClass> remaining)
+	{
+		if (remaining.size() == 0) {
+			return getFallback(callSite, argumentCount);
+		} else {
+			LilaClass type = remaining.remove();
+			MethodHandle target;
+			if (level + 1 == argumentCount) {
+				MethodHandle mh = (MethodHandle)entry.get(type);
+				target = mh.asSpreader(LilaObject[].class, argumentCount);	
+			} else {
+				Map nextEntry = (Map)entry.get(type);
+				LinkedList<LilaClass> types = new LinkedList<>(); 
+				types.addAll(nextEntry.keySet());
+				target = compileLevelN(level + 1, callSite, argumentCount, nextEntry, types);	
+			}
+			return MethodHandles.guardWithTest(checkType.bindTo(type).bindTo(level),
+			                                   target,
+			                                   compileLevelN(level, callSite, argumentCount, 
+			                                                 entry, remaining));
+		}
 	}
 
-	// polymorphic inline cache chain limit
-	static final int maxCainCount = 5;
+	private static MethodHandle compile(LilaCallSite callSite, int argumentCount) {
+		LinkedList<LilaMultiMethod> methods = new LinkedList<>(); 
+		methods.addAll(callSite.multiMethodCache.keySet());
+		return compileLevel0(callSite, argumentCount, methods)
+			.asCollector(LilaObject[].class, callSite.type().parameterCount());
+	}
 
 	private static final String arityExceptionMessage =
 		"Multi-method %s requires %d arguments, but passed %d";
@@ -174,51 +223,33 @@ public class LilaMultiMethod extends LilaCallable {
 		int argumentCount = callSiteType.parameterCount() - 1;
 		MethodHandle mh = targetHandle(mm, args, types, argumentCount);
 
-		//drop multi-method
+		// drop multi-method
 		MethodHandle target = MethodHandles
 			.dropArguments(mh, 0, LilaCallable.class)
 			.asType(callSiteType);
-
-		MethodHandle mhTest = check
-			.bindTo(mm)
-			.bindTo(types)
-			.asCollector(LilaObject[].class, args.length);
-
-		MethodType checkType = mhTest.type()
-			.changeParameterType(0, callSiteType.parameterType(0));
-		mhTest = mhTest.asType(checkType);
-
-		MethodHandle fallback;
-		// check if polymorphic inline cache chain limit is reached
-		if (callSite.chainCount > maxCainCount) {
-			// guard fallback is this default fallback
-			fallback = RT.fallback.bindTo(callSite)
-				.asCollector(LilaObject[].class, argumentCount)
-				.asType(callSiteType);
-			callSite.chainCount = 0;
-		} else {
-			// set guard fallback to call site's current target
-			fallback = callSite.getTarget();
-			callSite.chainCount += 1;
-		}
-
-		callSite.setTarget(MethodHandles.guardWithTest(mhTest,
-		                                               target,
-		                                               fallback));
+		
+		callSite.cache(mm, types, target);
+		MethodHandle cache = compile(callSite, callSiteType.parameterCount());
+		callSite.setTarget(cache);
 
 		return (LilaObject)mh.invokeWithArguments((Object[])args);
 	}
 
-	private static final MethodHandle check;
+	private static final MethodHandle checkMethod;
+	private static final MethodHandle checkType;
 	private static final MethodHandle callNextMethod;
 	static {
 		Lookup lookup = MethodHandles.lookup();
 		try {
-			check =
-				lookup.findStatic(LilaMultiMethod.class, "check",
+			checkMethod =
+				lookup.findStatic(LilaMultiMethod.class, "checkMethod",
 				                  methodType(boolean.class,
-				                             LilaMultiMethod.class, LilaClass[].class,
 				                             LilaMultiMethod.class, LilaObject[].class));
+			checkType =
+				lookup.findStatic(LilaMultiMethod.class, "checkType",
+				                  methodType(boolean.class,
+				                             LilaClass.class, Integer.class, 
+				                             LilaObject[].class));
 			callNextMethod =
 				lookup.findStatic(LilaMultiMethod.class, "callNextMethod",
 				                  methodType(LilaObject.class,
