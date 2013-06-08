@@ -63,13 +63,76 @@ module Lila
       # add method to implicit generic function
       mm = RT.getValue self.name
       unless mm.instance_of? LilaMultiMethod
-        mm = LilaMultiMethod.new name, arity
+        mm = LilaMultiMethod.new self.name, arity
+        mm.setVariadic self.parameter_list.rest
         RT.setValue self.name, mm
       end
-      mm.setVariadic self.parameter_list.rest
       # add method
       mm.addMethod specializers, function.javaValue
       puts mm
+    end
+    
+    def compile(context, builder)
+      required = self.parameter_list.parameters.dup
+      if self.parameter_list.rest
+        required.pop
+      end
+      arity = required.length
+      # add next-method parameter
+      next_method = Parameter.new 'next-method'
+      self.parameter_list.parameters.unshift next_method 
+      # get current value
+      builder.ldc self.name
+      builder.invokestatic RT, 'getValue', 
+        [LilaObject, Java::java.lang.String]
+      builder.dup
+      builder.instanceof LilaMultiMethod
+      label = gensym
+      builder.ifne label
+      # get rid of current value
+      builder.pop
+      builder.new LilaMultiMethod
+      # initialize
+      builder.dup
+      builder.ldc self.name
+      builder.ldc arity
+      builder.invokespecial LilaMultiMethod, '<init>',
+        [Java::void, Java::java.lang.String, Java::int]
+      if self.parameter_list.rest
+        dup
+        builder.ldc true
+        builder.invokevirtual LilaMultiMethod, 'setVariadic', 
+          [Java::void, Java::boolean] 
+      end
+      builder.dup
+      builder.ldc self.name
+      builder.swap
+      builder.invokestatic RT, 'setValue', 
+        [Java::void, Java::java.lang.String, LilaObject]
+      builder.label label
+      builder.checkcast LilaMultiMethod
+      # specializers 
+      builder.ldc required.length    
+      builder.anewarray LilaClass
+      required.each_with_index { |parameter, index|
+        builder.dup           
+        builder.ldc index    
+        if parameter.type
+          parameter.type.compile context, builder
+        else
+          builder.getstatuc LilaObject, 'lilaClass'
+        end
+        builder.aastore 
+      }
+      # create actual function
+      function = Function.new(self.name, self.parameter_list, self.expressions)
+      function.compile context, builder
+      builder.invokevirtual LilaObject, 'getJavaValue', Java::java.lang.Object
+      builder.checkcast MethodHandle     
+      # add
+      builder.invokevirtual LilaMultiMethod, 'addMethod', 
+        [Java::void, LilaClass[], MethodHandle]
+
     end
   end
 
@@ -125,6 +188,10 @@ module Lila
 
       puts pm
     end
+    
+    def compile(context, builder)
+      # TODO
+    end
   end
 
   class ClassDefinition < Struct.new :name, :superclasses, :properties
@@ -137,6 +204,35 @@ module Lila
       RT.setValue self.name, lilaClass
       lilaClass
     end
+    
+    def compile(context, builder)
+      builder.ldc self.name
+      # superclasses
+      builder.dup
+      builder.ldc self.superclasses.length    
+      builder.anewarray LilaClass
+      self.superclasses.each_with_index { |superclass, index|
+        builder.dup           
+        builder.ldc index    
+        superclass.compile context, builder
+        builder.aastore 
+      }
+      # properties
+      properties = (self.properties || [])
+      builder.ldc properties.length    
+      builder.anewarray Java::java.lang.String
+      properties.each_with_index { |property, index|
+        builder.dup           
+        builder.ldc index    
+        builder.ldc property
+        builder.aastore 
+      }
+      builder.invokestatic LilaClass, 'make', 
+        [LilaClass, Java::java.lang.String, 
+         LilaClass[], Java::java.lang.String[]]
+      builder.invokestatic RT, 'setValue', 
+        [Java::void, Java::java.lang.String, LilaObject]
+    end
   end
 
   class VariableDefinition < Struct.new :name, :value
@@ -145,6 +241,13 @@ module Lila
       puts value
       RT.setValue self.name, value
     end
+    
+    def compile(context, builder)
+      builder.ldc self.name
+      self.value.compile context, builder
+      builder.invokestatic RT, 'setValue', 
+        [Java::void, Java::java.lang.String, LilaObject]
+     end
   end
 
 
