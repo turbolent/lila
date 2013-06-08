@@ -1,6 +1,6 @@
 <project name="lila" basedir="." default="compile">
   <property name="src" value="src/java" />
-  <property name="build" value="build" />
+  <property name="build" value="bin" />
   <property name="lib" value="lib" />
 
   <path id="classpath">
